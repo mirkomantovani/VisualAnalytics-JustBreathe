@@ -37,8 +37,59 @@ ui <- dashboardPage(
                      menuItem("Statistics Line Graphs", tabName = "line"),
                      menuItem("County Map", tabName = "map")
                    ),
-                   selectInput("Year", "Select Year", years, selected = 2018),
+                   tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #60ECEC;color:white;}")),
+                   tags$style(
+                     HTML("label{
+                                color: rgb(255, 255, 255);
+                                }
+
+                          .selectize-input input {
+                            background: rgb(79, 232, 211);
+                          }
+                          .irs-grid-text {
+                        bottom: 5px;
+                        color: #ffffff;
+                          }
+
+                            .skin-blue .main-header .navbar {
+    background: rgb(26, 72, 86);
+                          box-shadow: 2px 2px 2px #e2e2e2;
+                          }
+
+.skin-blue .main-header .navbar .sidebar-toggle {
+    background: rgb(30, 83, 99);
+                          color: rgb(208, 208, 208);
+}
+
+.form-control, .selectize-input, .selectize-control.single .selectize-input {
+    background: rgb(59, 236, 220);
+    color: rgb(0,0,0);
+    border-color: rgb(200,200,200);
+    border-radius: 5px;
+    height: 34px;
+    min-height: 34px;
+    padding: 6px 12px;
+}
+.selectize-input, .selectize-control.single .selectize-input.input-active {
+    background: rgb(59, 236, 220);
+    cursor: text;
+    display: inline-block;
+}
+
+.selectize-dropdown, .selectize-dropdown.form-control {
+    background: rgb(0,170,183);
+    border-radius: 4px;
+}
+                          "
+                        
+                          )
+                     ),
+                   #selectInput("Year", "Select Year", years, selected = 2018),
+                   sliderInput(inputId = "Year", 
+                               label = "Select Year", 
+                               value = 2018, min = 1980, max = 2018),
                    selectInput("State", "Select State", states, selected = 'Illinois'),
+                   tags$style("#County {background-color:blue;}"),
                    selectInput("County", "Select County", counties, selected = 'Cook')
   ),
   dashboardBody(
