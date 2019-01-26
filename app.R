@@ -1,9 +1,13 @@
 # libraries
 
 library(shiny)
+library(devtools)
 library(ggplot2)
 library(shinydashboard)
 library(scales) # needed for percent function
+library(shinythemes) # themes for bootstrapPage, fluidPage, navbarPage, or fixedPage
+library(dashboardthemes)
+library(ggthemes) 
 
 # getting the datasets
 
@@ -22,30 +26,54 @@ t<-subset(dataset, State == 'Illinois')
 counties<-unique(t$County)
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Visual Analytics - Just Breathe"),
-  dashboardSidebar(disable = FALSE, collapsed = FALSE,
+  #skin = "black",
+  dashboardHeader(
+    title = "Visual Analytics - Just Breathe",
+    titleWidth = 300),
+  dashboardSidebar(disable = FALSE, collapsed = TRUE,
                    
+                   sidebarMenu(
+                     menuItem("Pie Charts AQI and pollutants", tabName = "pie"),
+                     menuItem("Statistics Line Graphs", tabName = "line"),
+                     menuItem("County Map", tabName = "map")
+                   ),
                    selectInput("Year", "Select Year", years, selected = 2018),
                    selectInput("State", "Select State", states, selected = 'Illinois'),
                    selectInput("County", "Select County", counties, selected = 'Cook')
   ),
   dashboardBody(
-    fluidRow(
-      column(6, box(title = "AQI levels", status = "primary", width = NULL,
-                    plotOutput("aqi_pie", height = "30vh"),
-                    plotOutput("aqi_bar", height = "30vh"),
-                    dataTableOutput("aqi_table", height = "20vh")
-      )),
-      column(6, box(title = "Pollutants",status = "primary", width = NULL, 
-                    fluidRow(column(6,plotOutput("co_pie", height = "20vh")),column(6,plotOutput("no2_pie", height = "20vh"))),
-                    fluidRow(column(6,plotOutput("ozone_pie", height = "20vh")),column(6,plotOutput("so2_pie", height = "20vh"))),
-                    fluidRow(column(6,plotOutput("pm25_pie", height = "20vh")),column(6,plotOutput("pm10_pie", height = "20vh")))
-                    
-                    ))
+    shinyDashboardThemes(
+      theme = "blue_gradient"
     ),
-    fluidRow(
-      column(6, h1("madonna troia")),
-      column(6, h1("cagna puttana"))
+    tabItems(
+      tabItem("pie",
+        fluidRow(
+          column(6, box(title = "AQI levels", width = NULL,status = "primary",
+                        plotOutput("aqi_pie", height = "30vh"),
+                        plotOutput("aqi_bar", height = "25vh"),
+                        dataTableOutput("aqi_table", height = "15vh")
+          )),
+          column(6, box(title = "Pollutants",status = "primary", width = NULL, 
+                        box(title = "Percentage of days",status = "success", width = NULL,
+                            fluidRow(column(4,plotOutput("co_pie", height = "20vh")),column(4,plotOutput("no2_pie", height = "20vh")),column(4,plotOutput("ozone_pie", height = "20vh"))),
+                            fluidRow(column(4,plotOutput("so2_pie", height = "20vh")),column(4,plotOutput("pm25_pie", height = "20vh")),column(4,plotOutput("pm10_pie", height = "20vh")))),
+                            dataTableOutput("pollutants_table", height = "15vh")
+                        
+                        )
+                 )
+        )
+      ),
+      
+      tabItem("line",
+              h1("WIP")
+              ),
+      
+      tabItem("map",
+              h1("WIP")
+      )
+      
+      
+      # Finish tabs
     )
   )
 )
@@ -68,7 +96,7 @@ server <- function(input, output) {
     
     df <- data.frame(
 
-      group = c("Good", "Moderate", "Unhealthy for Sensitive Groups", "Very Unhealthy", "Hazardous"),
+      group = c("Percentage of Good Days", "Percentage of Moderate Days", "Percentage of Unhealthy for Sensitive Groups Days", "Percentage of Very Unhealthy Days", "Percentage of Hazardous Days"),
       value = c(current()$Good.Days/current()$Days.with.AQI*100, current()$Moderate.Days/current()$Days.with.AQI*100, 
                 current()$Unhealthy.for.Sensitive.Groups.Days/current()$Days.with.AQI*100,
                 current()$Very.Unhealthy.Days/current()$Days.with.AQI*100,
@@ -78,10 +106,11 @@ server <- function(input, output) {
     pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
       geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greys","AQI Level") +
       theme(
+        #plot.background = element_rect(fill = "grey"),
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         panel.border = element_blank()
-      )
+      ) 
       #+ geom_text(aes(x=1, y = cumsum(value) - value/2, label=percent(value/100)))
     
       #geom_text(aes(y = value/3 + c(0, cumsum(value)[-length(value)]), 
@@ -108,7 +137,7 @@ server <- function(input, output) {
       theme(
         text = element_text(size=12),
         legend.position="none"
-        )+
+        )+ 
     xlab("AQI level") + ylab("Days count")
     bar
   })
@@ -231,6 +260,14 @@ server <- function(input, output) {
       )
     pie
   })
+  
+  # table of pollutants
+  output$pollutants_table <- DT::renderDataTable(current()[, c('Days.CO', 'Days.NO2',"Days.Ozone", "Days.SO2", "Days.PM2.5", "Days.PM10")],
+                                          rownames = FALSE,
+                                          colnames = c('CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'), 
+                                          options = list(searching = FALSE,paging = FALSE,
+                                                         dom = 't'
+                                          ))
   
   
 # End of server
