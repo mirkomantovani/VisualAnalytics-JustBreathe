@@ -31,15 +31,15 @@ ui <- dashboardPage(
   ),
   dashboardBody(
     fluidRow(
-      column(6, box(title = "Percentage of days AQI levels", status = "primary", width = NULL,
+      column(6, box(title = "AQI levels", status = "primary", width = NULL,
                     plotOutput("aqi_pie", height = "30vh"),
                     plotOutput("aqi_bar", height = "30vh"),
                     dataTableOutput("aqi_table", height = "20vh")
       )),
-      column(6, box(title = "test",status = "primary", width = NULL, 
-                    fluidRow(column(6,plotOutput("co_pie", height = "25vh")),column(6,plotOutput("no2_pie", height = "25vh"))),
-                    fluidRow(column(6,plotOutput("ozone_pie", height = "25vh")),column(6,plotOutput("so2_pie", height = "25vh"))),
-                    fluidRow(column(6,plotOutput("pm25_pie", height = "25vh")),column(6,plotOutput("pm10_pie", height = "25vh")))
+      column(6, box(title = "Pollutants",status = "primary", width = NULL, 
+                    fluidRow(column(6,plotOutput("co_pie", height = "20vh")),column(6,plotOutput("no2_pie", height = "20vh"))),
+                    fluidRow(column(6,plotOutput("ozone_pie", height = "20vh")),column(6,plotOutput("so2_pie", height = "20vh"))),
+                    fluidRow(column(6,plotOutput("pm25_pie", height = "20vh")),column(6,plotOutput("pm10_pie", height = "20vh")))
                     
                     ))
     ),
@@ -76,7 +76,7 @@ server <- function(input, output) {
     )
   
     pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Blues") +
+      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greys","AQI Level") +
       theme(
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
@@ -103,7 +103,7 @@ server <- function(input, output) {
     
     # bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + geom_bar(stat="identity") + scale_fill_brewer(palette="Blues") 
     
-    bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + scale_fill_brewer(palette="Blues") +
+    bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + scale_fill_brewer(palette="Greys") +
       geom_bar(stat="identity") + coord_flip() + 
       theme(
         text = element_text(size=12),
@@ -120,19 +120,120 @@ server <- function(input, output) {
                                           options = list(searching = FALSE,paging = FALSE,
                                                          dom = 't'
                                                          ))
-    # DT::datatable({
-    #   current()[, c('Good.Days', 'Moderate.Days')]
-    #   # current()
-    #   # diocane()
-    #   # data.frame(c(current()$Good.Days, current()$Moderate.Days))
-    #   
-    # },
-    # colnames = c("Good.Days" = 0, "Bad" = 1),
-  #   rownames = FALSE,
-  #   options = list(searching = FALSE,ordering = F, lengthChange = FALSE, paging = FALSE, dom = 't',
-  #                  columnDefs = list(list(visible=FALSE, targets=c(1,2)), list(className = 'dt-right', targets = 0:2)))
-  #   )
-  # )
+  # co_pie", height = "25vh")),column(6,plotOutput("no2_pie", height = "25vh"))),
+  #                   fluidRow(column(6,plotOutput("ozone_pie", height = "25vh")),column(6,plotOutput("so2_pie", height = "25vh"))),
+  # fluidRow(column(6,plotOutput("pm25_pie", height = "25vh")),column(6,plotOutput("pm10_pie"
+
+# pie chart of CO
+  output$co_pie <- renderPlot({
+  
+  df <- data.frame(
+    group = c("Days without CO", "Days CO"),
+    value = c((current()$Days.with.AQI-current()$Days.CO)/current()$Days.with.AQI*100, current()$Days.CO/current()$Days.with.AQI*100)
+  )
+  
+  pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+  geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Purples","CO",direction = -1) +
+  theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.border = element_blank()
+  )
+  pie
+})
+
+  # pie chart of NO2
+  output$no2_pie <- renderPlot({
+    
+    df <- data.frame(
+      group = c("Days without NO2", "Days NO2"),
+      value = c((current()$Days.with.AQI-current()$Days.NO2)/current()$Days.with.AQI*100, current()$Days.NO2/current()$Days.with.AQI*100)
+    )
+    
+    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="PuBu","NO2",direction = -1) +
+      theme(
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank()
+      )
+    pie
+  })
+  
+  # pie chart of Ozone
+  output$ozone_pie <- renderPlot({
+    
+    df <- data.frame(
+      group = c("Days without Ozone", "Days Ozone"),
+      value = c((current()$Days.with.AQI-current()$Days.Ozone)/current()$Days.with.AQI*100, current()$Days.Ozone/current()$Days.with.AQI*100)
+    )
+    
+    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Blues","Ozone",direction = -1) +
+      theme(
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank()
+      )
+    pie
+  })
+  
+  # pie chart of SO2
+  output$so2_pie <- renderPlot({
+    
+    df <- data.frame(
+      group = c("Days without SO2", "Days SO2"),
+      value = c((current()$Days.with.AQI-current()$Days.SO2)/current()$Days.with.AQI*100, current()$Days.SO2/current()$Days.with.AQI*100)
+    )
+    
+    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="BuGn","SO2",direction = -1) +
+      theme(
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank()
+      )
+    pie
+  })
+  
+  # pie chart of PM2.5
+  output$pm25_pie <- renderPlot({
+    
+    df <- data.frame(
+      group = c("Days without PM2.5", "Days PM2.5"),
+      value = c((current()$Days.with.AQI-current()$Days.PM2.5)/current()$Days.with.AQI*100, current()$Days.PM2.5/current()$Days.with.AQI*100)
+    )
+    
+    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="GnBu","PM2.5",direction = -1) +
+      theme(
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank()
+      )
+    pie
+  })
+  
+  # pie chart of PM10
+  output$pm10_pie <- renderPlot({
+    
+    df <- data.frame(
+      group = c("Days without PM10", "Days PM10"),
+      value = c((current()$Days.with.AQI-current()$Days.PM10)/current()$Days.with.AQI*100, current()$Days.PM10/current()$Days.with.AQI*100)
+    )
+    
+    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greens","PM10",direction = -1) +
+      theme(
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank()
+      )
+    pie
+  })
+  
+  
+# End of server
 }
 
 shinyApp(ui = ui, server = server)
