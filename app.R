@@ -10,6 +10,10 @@ library(shinythemes) # themes for bootstrapPage, fluidPage, navbarPage, or fixed
 library(dashboardthemes)
 library(ggthemes) 
 library(shinyalert)
+library(leaflet)
+library(rgdal)
+library(geojson)
+library(geojsonio)
 
 # importing datasets
 temp = list.files(pattern="*.csv")
@@ -135,29 +139,31 @@ ui <- dashboardPage(
       tabItem("time",
               fluidRow(
                 # Input county with search
-                column(3,box(title = "County Selection",status = "success", width = NULL,
+                column(2,box(title = "County Selection",status = "success", width = NULL,
                        column(12, fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
                                                options = NULL)),
                        fluidRow(h1("internetInfo")),
                        fluidRow(h1(textOutput("sel_state"))),
                        fluidRow(h1(textOutput("sel_county")))))),
                 # 2 tabs, (line plots and table, map)
-                column(9,
+                column(10,
                        tabsetPanel(
                          tabPanel("AQI Time Series",
-                                  plotOutput("aqi_time")
+                                  plotOutput("aqi_time", height = "70vh")
                                   ),
                          tabPanel("Pollutants Percentage Time Series",
                                   tabsetPanel(
                                     tabPanel("Line Plot",
-                                             plotOutput("pollutants_time")
+                                             plotOutput("pollutants_time", height = "60vh")
                                              ),
-                                    tabPanel("Table"
-                                             
+                                    tabPanel("Table",
+                                             div(DT::dataTableOutput("pollutants_time_table"), style = "font-size:90%")
                                              )
                                   )
                                   ),
-                         tabPanel("Map")
+                         tabPanel("Map",
+                                  leafletOutput("map_county")
+                                  )
                        )
                        )
               )
@@ -519,6 +525,53 @@ server <- function(input, output, session) {
     
       # scale_color_discrete(breaks=c("Max","90th Percentile","Median"))
   })
+  
+  # table of pollutants
+  output$pollutants_time_table <- DT::renderDataTable(subset(dataset, State == selected_state() & County == selected_county())[, c('Year','Days.CO', 'Days.NO2',"Days.Ozone", "Days.SO2", "Days.PM2.5", "Days.PM10")],
+                                                 rownames = FALSE,
+                                                 colnames = c('Year','CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'), 
+                                                 options = list(searching = TRUE,paging = TRUE,lengthMenu = c(5, 10, 40), pageLength = 7
+                                                                # dom = 't'
+                                                 ))
+  
+  # County on Leaflet Map
+  output$map_county <- renderLeaflet({
+    
+    xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
+    
+    # nyc <- xy[xy$STATE == 36, ]
+    
+    leaflet(xy) %>%
+      addTiles() %>%
+      addPolygons(color = "#962121", weight = 0.8, smoothFactor = 0.2,
+                  opacity = 1.0, fillOpacity = 0.1,
+                  # fillColor = ~colorQuantile("YlOrRd"),
+                  highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                      bringToFront = TRUE)) %>%
+      setView(lng = -86.47289099999999, lat = 32.437458, zoom = 9) %>%
+      addMarkers(lng = -86.47289099999999, lat = 32.437458, label = "Selected County")
+    
+    # states <- readOGR("shp/cb_2013_us_state_20m.shp",
+    #                   layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
+    # neStates <- subset(states, states$STUSPS %in% c(
+    #   "CT","ME","MA","NH","RI","VT","NY","NJ","PA"
+    # ))
+    # leaflet(neStates) %>%
+    #   addPolygons(color = "#444444", weight = 1, smoothFactor = 0.5,
+    #               opacity = 1.0, fillOpacity = 0.5,
+    #               fillColor = ~colorQuantile("YlOrRd", ALAND)(ALAND),
+    #               highlightOptions = highlightOptions(color = "white", weight = 2,
+    #                                                   bringToFront = TRUE))
+    # map <- leaflet(data = us.map, height = session$width)
+    # map <- addTiles(map)
+    # map <- setView(map, lng = -86.47289099999999, lat = 32.437458, zoom = 15)
+    # map <- addMarkers(map, lng = PumpLocations$x, lat = PumpLocations$y, label = "Pump")
+    # map <- addMarkers(map, lng = DeathLocations$x, lat = DeathLocations$y, label = as.character(DeathLocations$count), clusterOptions = markerClusterOptions())
+    # map
+    
+  }
+  
+  )
   
 # End of server
 }
