@@ -26,6 +26,16 @@ states<-unique(dataset$State)
 t<-subset(dataset, State == 'Illinois')
 counties<-unique(t$County)
 
+# All counties with state
+all_counties <- c()
+for(s in states){
+  coun <- subset(dataset, State == s)
+  counti<-unique(coun$County)
+  counti <- paste(counti,"-",s)
+  all_counties <- c(all_counties,counti)
+}
+
+
 ui <- dashboardPage(
   #skin = "black",
   dashboardHeader(
@@ -36,8 +46,8 @@ ui <- dashboardPage(
                    sidebarMenu(
                      useShinyalert(),
                      menuItem("Pie Charts AQI and pollutants", tabName = "pie"),
-                     menuItem("Statistics Line Graphs", tabName = "line"),
-                     menuItem("County Map", tabName = "map")
+                     menuItem("County Time Series", tabName = "time"),
+                     menuItem("Compare Counties", tabName = "compare")
                    ),
                    tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #60ECEC;color:white;}")),
                    tags$style(
@@ -122,11 +132,26 @@ ui <- dashboardPage(
         )
       ),
       
-      tabItem("line",
-              h1("WIP")
+      # SECOND MENU TAB
+      tabItem("time",
+              fluidRow(
+                # Input county with search
+                column(3,box(title = "County Selection",status = "success", width = NULL,
+                       fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
+                                               options = NULL)),
+                       fluidRow(h1("internetInfo")))),
+                # 2 tabs, (line plots and table, map)
+                column(9,
+                       tabsetPanel(
+                         tabPanel("Time Series"),
+                         tabPanel("Map")
+                       )
+                       )
+              )
               ),
       
-      tabItem("map",
+      # THIRD MENU TAB
+      tabItem("compare",
               h1("WIP")
       )
       
