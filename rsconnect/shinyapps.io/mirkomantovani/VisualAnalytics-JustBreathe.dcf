@@ -1,0 +1,12 @@
+name: VisualAnalytics-JustBreathe
+title: VisualAnalytics-JustBreathe
+username:
+account: mirkomantovani
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 668958
+bundleId: 1839698
+url: https://mirkomantovani.shinyapps.io/VisualAnalytics-JustBreathe/
+when: 1548605284.13045
+asMultiple: FALSE
+asStatic: FALSE

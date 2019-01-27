@@ -1,5 +1,6 @@
-# libraries
+# Mirko Mantovani - 01/27/2019
 
+# libraries
 library(shiny)
 library(devtools)
 library(ggplot2)
@@ -11,7 +12,6 @@ library(ggthemes)
 library(shinyalert)
 
 # importing datasets
-
 temp = list.files(pattern="*.csv")
 datasets = lapply(temp, read.csv)
 dataset <- do.call(rbind, datasets)
@@ -139,7 +139,8 @@ ui <- dashboardPage(
                        column(12, fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
                                                options = NULL)),
                        fluidRow(h1("internetInfo")),
-                       fluidRow(textOutput("sel_state"))))),
+                       fluidRow(h1(textOutput("sel_state"))),
+                       fluidRow(h1(textOutput("sel_county")))))),
                 # 2 tabs, (line plots and table, map)
                 column(9,
                        tabsetPanel(
@@ -194,6 +195,10 @@ server <- function(input, output, session) {
     # if(grepl(input$CountySearch,"-")){
       strsplit(input$CountySearch," - ")[[1]][2]
     # }
+  })
+  
+  selected_county <- reactive({
+    strsplit(input$CountySearch," - ")[[1]][1]
   })
   
   # observeEvent(input$CountySearch,{
@@ -435,6 +440,10 @@ server <- function(input, output, session) {
   
   output$sel_state <- renderText({ 
     selected_state()
+  })
+  
+  output$sel_county <- renderText({ 
+    selected_county()
   })
   
   
