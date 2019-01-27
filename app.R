@@ -20,7 +20,10 @@ temp = list.files(pattern="*.csv")
 datasets = lapply(temp, read.csv)
 dataset <- do.call(rbind, datasets)
 
-# sites <- read.table(file = "aqs_sites.csv", sep=",",header = TRUE)
+sites <- read.table(file = "sites/aqs_sites.csv", sep=",",header = TRUE)
+
+xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
+
 
 
 ########################################### PREPROCESSING #########################################
@@ -51,8 +54,8 @@ ui <- dashboardPage(
                    
                    sidebarMenu(
                      useShinyalert(),
-                     menuItem("Pie Charts AQI and pollutants", tabName = "pie"),
-                     menuItem("County Time Series", tabName = "time"),
+                     menuItem("Year details for County", tabName = "pie"),
+                     menuItem("County trends", tabName = "time"),
                      menuItem("Compare Counties", tabName = "compare")
                    ),
                    tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #60ECEC;color:white;}")),
@@ -540,12 +543,22 @@ server <- function(input, output, session) {
   # County on Leaflet Map
   output$map_county <- renderLeaflet({
     
+    latit <- 32
+    longit <- -86
+    
     # Extracting long and lat of selected county from sites
     site<-subset(sites, State.Name == selected_state() & County.Name == selected_county())
-    latit <- site$Latitude
-    longit <- site$Longitude
     
-    xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
+    latit <- site$Latitude
+    latit <- latit[latit!=0] # Eliminating 0 values
+    latit <- latit[!is.na(latit)] # Eliminating NAs
+    computed_lat <- mean(latit)
+    longit <- site$Longitude
+    longit <- longit[longit!=0] # Eliminating 0 values
+    longit <- longit[!is.na(longit)] # Eliminating NAs
+    computed_lng <- mean(longit)
+    
+    # xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
     
     # nyc <- xy[xy$STATE == 36, ]
     
@@ -556,8 +569,8 @@ server <- function(input, output, session) {
                   # fillColor = ~colorQuantile("YlOrRd"),
                   highlightOptions = highlightOptions(color = "white", weight = 3,
                                                       bringToFront = TRUE)) %>%
-      setView(lng = longit, lat = latit, zoom = 6) %>%
-      addMarkers(lng = -longit, lat = latit, label = "Selected County")
+      setView(lng = computed_lng, lat = computed_lat, zoom = 6) %>%
+      addMarkers(lng = computed_lng, lat = computed_lat, label = "Selected County")
     
     # states <- readOGR("shp/cb_2013_us_state_20m.shp",
     #                   layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
