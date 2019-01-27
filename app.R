@@ -10,16 +10,13 @@ library(dashboardthemes)
 library(ggthemes) 
 library(shinyalert)
 
-# getting the datasets
+# importing datasets
 
 temp = list.files(pattern="*.csv")
 datasets = lapply(temp, read.csv)
 dataset <- do.call(rbind, datasets)
 
-# preprocessing
-
-
-# variables
+########################################### PREPROCESSING #########################################
 
 years<-c(1980:2018)
 states<-unique(dataset$State)
@@ -35,6 +32,8 @@ for(s in states){
   all_counties <- c(all_counties,counti)
 }
 
+
+############################################### UI ################################################
 
 ui <- dashboardPage(
   #skin = "black",
@@ -137,9 +136,9 @@ ui <- dashboardPage(
               fluidRow(
                 # Input county with search
                 column(3,box(title = "County Selection",status = "success", width = NULL,
-                       fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
+                       column(12, fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
                                                options = NULL)),
-                       fluidRow(h1("internetInfo")))),
+                       fluidRow(h1("internetInfo"))))),
                 # 2 tabs, (line plots and table, map)
                 column(9,
                        tabsetPanel(
@@ -161,6 +160,10 @@ ui <- dashboardPage(
   )
 )
     
+
+
+
+############################################# SERVER ##############################################
 
 server <- function(input, output, session) {
   
