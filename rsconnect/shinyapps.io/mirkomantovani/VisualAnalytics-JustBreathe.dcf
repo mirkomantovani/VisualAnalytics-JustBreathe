@@ -5,8 +5,8 @@ account: mirkomantovani
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 668958
-bundleId: 1839698
+bundleId: 1839724
 url: https://mirkomantovani.shinyapps.io/VisualAnalytics-JustBreathe/
-when: 1548605284.13045
+when: 1548606679.05768
 asMultiple: FALSE
 asStatic: FALSE

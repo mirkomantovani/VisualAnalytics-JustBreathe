@@ -114,17 +114,17 @@ ui <- dashboardPage(
           column(6, box(title = "AQI levels", width = NULL,status = "primary",
                         plotOutput("aqi_pie", height = "30vh"),
                         plotOutput("aqi_bar", height = "25vh"),
-                        div(dataTableOutput("aqi_table", height = "15vh"), style = "font-size:80%")
+                        div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
           )),
           column(6, box(title = "Pollutants",status = "primary", width = NULL, 
                         tabsetPanel(
                           tabPanel("Percentage of days",
-                            fluidRow(column(4,plotOutput("co_pie", height = "23vh")),column(4,plotOutput("no2_pie", height = "23vh")),column(4,plotOutput("ozone_pie", height = "23vh"))),
-                            fluidRow(column(4,plotOutput("so2_pie", height = "23vh")),column(4,plotOutput("pm25_pie", height = "23vh")),column(4,plotOutput("pm10_pie", height = "23vh")))
+                            fluidRow(column(4,plotOutput("co_pie", height = "24vh")),column(4,plotOutput("no2_pie", height = "24vh")),column(4,plotOutput("ozone_pie", height = "24vh"))),
+                            fluidRow(column(4,plotOutput("so2_pie", height = "24vh")),column(4,plotOutput("pm25_pie", height = "24vh")),column(4,plotOutput("pm10_pie", height = "24vh")))
                             ),
-                          tabPanel("Bar chart", plotOutput("pollutants_bar", height = "46vh"))
+                          tabPanel("Bar chart", plotOutput("pollutants_bar", height = "48vh"))
                           ),
-                            div(dataTableOutput("pollutants_table", height = "15vh"), style = "font-size:80%")
+                            div(DT::dataTableOutput("pollutants_table"), style = "font-size:80%")
                         
                         )
                  )
@@ -144,7 +144,19 @@ ui <- dashboardPage(
                 # 2 tabs, (line plots and table, map)
                 column(9,
                        tabsetPanel(
-                         tabPanel("Time Series"),
+                         tabPanel("AQI Time Series",
+                                  plotOutput("aqi_time")
+                                  ),
+                         tabPanel("Pollutants Percentage Time Series",
+                                  tabsetPanel(
+                                    tabPanel("Line Plot",
+                                             plotOutput("pollutants_time")
+                                             ),
+                                    tabPanel("Table"
+                                             
+                                             )
+                                  )
+                                  ),
                          tabPanel("Map")
                        )
                        )
@@ -446,6 +458,67 @@ server <- function(input, output, session) {
     selected_county()
   })
   
+  # Time series of AQI statistics
+  output$aqi_time <- renderPlot({
+    df<-subset(dataset, State == selected_state() & County == selected_county())
+    ggplot(data = df, aes(x = Year)) +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      geom_line(aes(y = Max.AQI, color = "Max"), size = 1, group = 1) + 
+      geom_point(aes(y = Max.AQI, color = "Max"), size = 3) +
+      geom_line(aes(y = X90th.Percentile.AQI, color = "90th Percentile"), size = 1, group = 3) +
+      geom_point(aes(y = X90th.Percentile.AQI, color = "90th Percentile"), size = 3) +
+      geom_line(aes(y = Median.AQI, color = "Median"), size = 1, group = 2) +
+      geom_point(aes(y = Median.AQI, color = "Median"), size = 3) +
+      labs(x = "Year", y = "Air Quality Index") +
+      scale_x_continuous(breaks = round(seq(min(df$Year), max(df$Year), by = 1),1)) +
+      # scale_color_manual(name = "Statistics",
+      #                    values = c("Max" = "firebrick1", 
+      #                               "90th Percentile" = "firebrick4",
+      #                               "Median" = "steelblue1")) +
+      scale_color_discrete(breaks=c("Max","90th Percentile","Median"))
+  })
+  
+  # Time series of Pollutants Percentage
+  output$pollutants_time <- renderPlot({
+    s_county<-subset(dataset, State == selected_state() & County == selected_county())
+    s_county[,14:19]<- s_county[14:19]/s_county$Days.with.AQI*100
+    # df <- data.frame(
+    #   
+    #   group = c("CO", "NO2", "Ozone", "SO2", "PM2.5","PM10"),
+    #   value = c(s_county$Days.CO/s_county$Days.with.AQI*100, s_county$Days.NO2/s_county$Days.with.AQI*100, 
+    #             s_county$Days.Ozone/s_county$Days.with.AQI*100,
+    #             s_county$Days.SO2/s_county$Days.with.AQI*100,
+    #             s_county$Days.PM2.5/s_county$Days.with.AQI*100,
+    #             s_county$Days.PM10/s_county$Days.with.AQI*100)
+    # )
+    ggplot(data = s_county, aes(x = Year)) +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      geom_line(aes(y = Days.CO, color = "CO"), size = 1, group = 1) + 
+      geom_point(aes(y = Days.CO, color = "CO"), size = 3) +
+      geom_line(aes(y = Days.NO2, color = "NO2"), size = 1, group = 2) +
+      geom_point(aes(y = Days.NO2, color = "NO2"), size = 3) +
+      geom_line(aes(y = Days.Ozone, color = "Ozone"), size = 1, group = 3) +
+      geom_point(aes(y = Days.Ozone, color = "Ozone"), size = 3) +
+      geom_line(aes(y = Days.SO2, color = "SO2"), size = 1, group = 4) +
+      geom_point(aes(y = Days.SO2, color = "SO2"), size = 3) +
+      geom_line(aes(y = Days.PM2.5, color = "PM2.5"), size = 1, group = 5) +
+      geom_point(aes(y = Days.PM2.5, color = "PM2.5"), size = 3) +
+      geom_line(aes(y = Days.PM10, color = "PM10"), size = 1, group = 6) +
+      geom_point(aes(y = Days.PM10, color = "PM10"), size = 3) +
+      labs(x = "Year", y = "Percentage of Pollutant") +
+      scale_x_continuous(breaks = round(seq(min(s_county$Year), max(s_county$Year), by = 1),1)) +
+      scale_y_continuous(breaks = round(seq(min(s_county[14:19]), max(s_county[14:19]), by = 10),1)) +
+      scale_color_manual(name = "Statistics",
+                         values = c("CO" = "#8a63cc",
+                                    "NO2" = "#514fc6",
+                                    "Ozone" = "#409ace",
+                                    "SO2" = "#55e864",
+                                    "PM2.5" = "#3cad69",
+                                    "PM10" = "#53edd4"))
+    # scale_fill_manual(values=c("#9B77D8", "#758fd6", "#68aed6","#6ed378", "#6ad197", "#66d6c4"))
+    
+      # scale_color_discrete(breaks=c("Max","90th Percentile","Median"))
+  })
   
 # End of server
 }
