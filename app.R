@@ -138,7 +138,8 @@ ui <- dashboardPage(
                 column(3,box(title = "County Selection",status = "success", width = NULL,
                        column(12, fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
                                                options = NULL)),
-                       fluidRow(h1("internetInfo"))))),
+                       fluidRow(h1("internetInfo")),
+                       fluidRow(textOutput("sel_state"))))),
                 # 2 tabs, (line plots and table, map)
                 column(9,
                        tabsetPanel(
@@ -174,14 +175,13 @@ server <- function(input, output, session) {
 
   # computing subset of data based on user selection of year, state, county
   current <- reactive({
-    print("reactive")
+    # print("reactive")
     subset(dataset, County == input$County & State == input$State & Year == input$Year)
     
     })
   
-  
   observeEvent(priority = 10,input$State,{
-    print("observeEvent")
+    # print("observeEvent")
     selected_state_data <- subset(dataset, State == input$State)
     counties_in_state <- unique(selected_state_data$County)
     
@@ -189,6 +189,18 @@ server <- function(input, output, session) {
     county <- input$County
     
   })
+  
+  selected_state <- reactive({
+    # if(grepl(input$CountySearch,"-")){
+      strsplit(input$CountySearch," - ")[[1]][2]
+    # }
+  })
+  
+  # observeEvent(input$CountySearch,{
+  #   
+  #   
+  # })
+  
   diocane<- reactive({data.frame(current()$Good.Days,current()$Moderate.Days)})
   
   # pie chart of aqi
@@ -419,6 +431,10 @@ server <- function(input, output, session) {
       scale_fill_manual(values=c("#C3B5DB", "#ABB6D4", "#83BDDF","#A2DFA8", "#98D5B3", "#93D8CD"))
     bar
     }
+  })
+  
+  output$sel_state <- renderText({ 
+    selected_state()
   })
   
   
