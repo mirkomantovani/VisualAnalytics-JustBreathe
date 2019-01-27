@@ -20,6 +20,9 @@ temp = list.files(pattern="*.csv")
 datasets = lapply(temp, read.csv)
 dataset <- do.call(rbind, datasets)
 
+# sites <- read.table(file = "aqs_sites.csv", sep=",",header = TRUE)
+
+
 ########################################### PREPROCESSING #########################################
 
 years<-c(1980:2018)
@@ -55,50 +58,50 @@ ui <- dashboardPage(
                    tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #60ECEC;color:white;}")),
                    tags$style(
                      HTML("label{
-                                color: rgb(255, 255, 255);
-                                }
-
+                          color: rgb(255, 255, 255);
+                          }
+                          
                           .selectize-input input {
-                            background: rgb(79, 232, 211);
+                          background: rgb(79, 232, 211);
                           }
                           .irs-grid-text {
-                        bottom: 5px;
-                        color: #ffffff;
+                          bottom: 5px;
+                          color: #ffffff;
                           }
-
-                            .skin-blue .main-header .navbar {
-    background: rgb(26, 72, 86);
+                          
+                          .skin-blue .main-header .navbar {
+                          background: rgb(26, 72, 86);
                           box-shadow: 2px 2px 2px #e2e2e2;
                           }
-
-.skin-blue .main-header .navbar .sidebar-toggle {
-    background: rgb(30, 83, 99);
+                          
+                          .skin-blue .main-header .navbar .sidebar-toggle {
+                          background: rgb(30, 83, 99);
                           color: rgb(208, 208, 208);
-}
-
-.form-control, .selectize-input, .selectize-control.single .selectize-input {
-    background: rgb(59, 236, 220);
-    color: rgb(0,0,0);
-    border-color: rgb(200,200,200);
-    border-radius: 5px;
-    height: 34px;
-    min-height: 34px;
-    padding: 6px 12px;
-}
-.selectize-input, .selectize-control.single .selectize-input.input-active {
-    background: rgb(59, 236, 220);
-    cursor: text;
-    display: inline-block;
-}
-
-.selectize-dropdown, .selectize-dropdown.form-control {
-    background: rgb(0,170,183);
-    border-radius: 4px;
-}
+                          }
+                          
+                          .form-control, .selectize-input, .selectize-control.single .selectize-input {
+                          background: rgb(59, 236, 220);
+                          color: rgb(0,0,0);
+                          border-color: rgb(200,200,200);
+                          border-radius: 5px;
+                          height: 34px;
+                          min-height: 34px;
+                          padding: 6px 12px;
+                          }
+                          .selectize-input, .selectize-control.single .selectize-input.input-active {
+                          background: rgb(59, 236, 220);
+                          cursor: text;
+                          display: inline-block;
+                          }
+                          
+                          .selectize-dropdown, .selectize-dropdown.form-control {
+                          background: rgb(0,170,183);
+                          border-radius: 4px;
+                          }
                           "
-                        
-                          )
-                     ),
+                          
+                     )
+                   ),
                    #selectInput("Year", "Select Year", years, selected = 2018),
                    
                    selectInput(inputId = "State", "Select State", states, selected = 'Illinois'),
@@ -107,32 +110,32 @@ ui <- dashboardPage(
                    sliderInput(inputId = "Year", 
                                label = "Select Year", 
                                value = 2018, min = 1980, max = 2018)
-  ),
+                   ),
   dashboardBody(
     shinyDashboardThemes(
       theme = "blue_gradient"
     ),
     tabItems(
       tabItem("pie",
-        fluidRow(
-          column(6, box(title = "AQI levels", width = NULL,status = "primary",
-                        plotOutput("aqi_pie", height = "30vh"),
-                        plotOutput("aqi_bar", height = "25vh"),
-                        div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
-          )),
-          column(6, box(title = "Pollutants",status = "primary", width = NULL, 
-                        tabsetPanel(
-                          tabPanel("Percentage of days",
-                            fluidRow(column(4,plotOutput("co_pie", height = "24vh")),column(4,plotOutput("no2_pie", height = "24vh")),column(4,plotOutput("ozone_pie", height = "24vh"))),
-                            fluidRow(column(4,plotOutput("so2_pie", height = "24vh")),column(4,plotOutput("pm25_pie", height = "24vh")),column(4,plotOutput("pm10_pie", height = "24vh")))
-                            ),
-                          tabPanel("Bar chart", plotOutput("pollutants_bar", height = "48vh"))
-                          ),
-                            div(DT::dataTableOutput("pollutants_table"), style = "font-size:80%")
-                        
-                        )
-                 )
-        )
+              fluidRow(
+                column(6, box(title = "AQI levels", width = NULL,status = "primary",
+                              plotOutput("aqi_pie", height = "30vh"),
+                              plotOutput("aqi_bar", height = "25vh"),
+                              div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
+                )),
+                column(6, box(title = "Pollutants",status = "primary", width = NULL, 
+                              tabsetPanel(
+                                tabPanel("Percentage of days",
+                                         fluidRow(column(4,plotOutput("co_pie", height = "24vh")),column(4,plotOutput("no2_pie", height = "24vh")),column(4,plotOutput("ozone_pie", height = "24vh"))),
+                                         fluidRow(column(4,plotOutput("so2_pie", height = "24vh")),column(4,plotOutput("pm25_pie", height = "24vh")),column(4,plotOutput("pm10_pie", height = "24vh")))
+                                ),
+                                tabPanel("Bar chart", plotOutput("pollutants_bar", height = "48vh"))
+                              ),
+                              div(DT::dataTableOutput("pollutants_table"), style = "font-size:80%")
+                              
+                )
+                )
+              )
       ),
       
       # SECOND MENU TAB
@@ -140,34 +143,34 @@ ui <- dashboardPage(
               fluidRow(
                 # Input county with search
                 column(2,box(title = "County Selection",status = "success", width = NULL,
-                       column(12, fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
-                                               options = NULL)),
-                       fluidRow(h1("internetInfo")),
-                       fluidRow(h1(textOutput("sel_state"))),
-                       fluidRow(h1(textOutput("sel_county")))))),
+                             column(12, fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
+                                                                options = NULL)),
+                                    fluidRow(h1("internetInfo")),
+                                    fluidRow(h1(textOutput("sel_state"))),
+                                    fluidRow(h1(textOutput("sel_county")))))),
                 # 2 tabs, (line plots and table, map)
                 column(10,
                        tabsetPanel(
                          tabPanel("AQI Time Series",
                                   plotOutput("aqi_time", height = "70vh")
-                                  ),
+                         ),
                          tabPanel("Pollutants Percentage Time Series",
                                   tabsetPanel(
                                     tabPanel("Line Plot",
                                              plotOutput("pollutants_time", height = "60vh")
-                                             ),
+                                    ),
                                     tabPanel("Table",
                                              div(DT::dataTableOutput("pollutants_time_table"), style = "font-size:90%")
-                                             )
+                                    )
                                   )
-                                  ),
+                         ),
                          tabPanel("Map",
                                   leafletOutput("map_county")
-                                  )
+                         )
                        )
-                       )
+                )
               )
-              ),
+      ),
       
       # THIRD MENU TAB
       tabItem("compare",
@@ -178,8 +181,8 @@ ui <- dashboardPage(
       # Finish tabs
     )
   )
-)
-    
+                   )
+
 
 
 
@@ -191,13 +194,13 @@ server <- function(input, output, session) {
                                   values = c('0 to 9' = '#08306b','10 to 19' = '#103a76', '20 to 29' = '#08519c',  '30 to 39' = '#2171b5',
                                              '40 to 49'= '#4292c6', '50 to 59' = '#6baed6','60 to 69' = '#9ecae1', '70 to 79' = '#c6dbef',
                                              '80+' = '#deebf7'))
-
+  
   # computing subset of data based on user selection of year, state, county
   current <- reactive({
     # print("reactive")
     subset(dataset, County == input$County & State == input$State & Year == input$Year)
     
-    })
+  })
   
   observeEvent(priority = 10,input$State,{
     # print("observeEvent")
@@ -211,7 +214,7 @@ server <- function(input, output, session) {
   
   selected_state <- reactive({
     # if(grepl(input$CountySearch,"-")){
-      strsplit(input$CountySearch," - ")[[1]][2]
+    strsplit(input$CountySearch," - ")[[1]][2]
     # }
   })
   
@@ -235,25 +238,25 @@ server <- function(input, output, session) {
     if(length(c$State) == 1){
       print("good")
       
-    df <- data.frame(
-
-      group = c("Percentage of Good Days", "Percentage of Moderate Days", "Percentage of Unhealthy for Sensitive Groups Days", "Percentage of Very Unhealthy Days", "Percentage of Hazardous Days"),
-      value = c(isolate(current())$Good.Days/isolate(current())$Days.with.AQI*100, isolate(current())$Moderate.Days/isolate(current())$Days.with.AQI*100, 
-                isolate(current())$Unhealthy.for.Sensitive.Groups.Days/isolate(current())$Days.with.AQI*100,
-                isolate(current())$Very.Unhealthy.Days/isolate(current())$Days.with.AQI*100,
-                isolate(current())$Hazardous.Days/isolate(current())$Days.with.AQI*100)
-    )
-  
-    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greys","AQI Level") +
-      theme(
-        #plot.background = element_rect(fill = "grey"),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        panel.border = element_blank()
-      ) 
-     
-    pie
+      df <- data.frame(
+        
+        group = c("Percentage of Good Days", "Percentage of Moderate Days", "Percentage of Unhealthy for Sensitive Groups Days", "Percentage of Very Unhealthy Days", "Percentage of Hazardous Days"),
+        value = c(isolate(current())$Good.Days/isolate(current())$Days.with.AQI*100, isolate(current())$Moderate.Days/isolate(current())$Days.with.AQI*100, 
+                  isolate(current())$Unhealthy.for.Sensitive.Groups.Days/isolate(current())$Days.with.AQI*100,
+                  isolate(current())$Very.Unhealthy.Days/isolate(current())$Days.with.AQI*100,
+                  isolate(current())$Hazardous.Days/isolate(current())$Days.with.AQI*100)
+      )
+      
+      pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greys","AQI Level") +
+        theme(
+          #plot.background = element_rect(fill = "grey"),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank()
+        ) 
+      
+      pie
     }
     # Signaling missing data
     else {
@@ -266,25 +269,25 @@ server <- function(input, output, session) {
   output$aqi_bar <- renderPlot({
     if(length(current()$State)==1){
       
-    df <- data.frame(
+      df <- data.frame(
+        
+        group = c("Good", "Moderate", "Unhealthy for Sensitive Groups", "Very Unhealthy", "Hazardous"),
+        value = c(current()$Good.Days, current()$Moderate.Days, 
+                  current()$Unhealthy.for.Sensitive.Groups.Days,
+                  current()$Very.Unhealthy.Days,
+                  current()$Hazardous.Days)
+      )
       
-      group = c("Good", "Moderate", "Unhealthy for Sensitive Groups", "Very Unhealthy", "Hazardous"),
-      value = c(current()$Good.Days, current()$Moderate.Days, 
-                current()$Unhealthy.for.Sensitive.Groups.Days,
-                current()$Very.Unhealthy.Days,
-                current()$Hazardous.Days)
-    )
-    
-    # bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + geom_bar(stat="identity") + scale_fill_brewer(palette="Blues") 
-    
-    bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + scale_fill_brewer(palette="Greys") +
-      geom_bar(stat="identity") + coord_flip() + 
-      theme(
-        text = element_text(size=12),
-        legend.position="none"
+      # bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + geom_bar(stat="identity") + scale_fill_brewer(palette="Blues") 
+      
+      bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + scale_fill_brewer(palette="Greys") +
+        geom_bar(stat="identity") + coord_flip() + 
+        theme(
+          text = element_text(size=12),
+          legend.position="none"
         )+ 
-    xlab("AQI level") + ylab("Days count")
-    bar
+        xlab("AQI level") + ylab("Days count")
+      bar
     }
   })
   
@@ -294,48 +297,48 @@ server <- function(input, output, session) {
                                           colnames = c('Good', 'Moderate', 'Unhealthy for Sensitive Groups', 'Very Unhealthy','Hazardous'), 
                                           options = list(searching = FALSE,paging = FALSE,
                                                          dom = 't'
-                                                         ))
+                                          ))
   # co_pie", height = "25vh")),column(6,plotOutput("no2_pie", height = "25vh"))),
   #                   fluidRow(column(6,plotOutput("ozone_pie", height = "25vh")),column(6,plotOutput("so2_pie", height = "25vh"))),
   # fluidRow(column(6,plotOutput("pm25_pie", height = "25vh")),column(6,plotOutput("pm10_pie"
-
-# pie chart of CO
+  
+  # pie chart of CO
   output$co_pie <- renderPlot({
     if(length(current()$State)==1){
       
-  df <- data.frame(
-    group = c("Days without CO", "Days CO"),
-    value = c((current()$Days.with.AQI-current()$Days.CO)/current()$Days.with.AQI*100, current()$Days.CO/current()$Days.with.AQI*100)
-  )
-  
-  pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-  geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Purples","CO",direction = -1) +
-  theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank(),
-  panel.border = element_blank()
-  )
-  pie
+      df <- data.frame(
+        group = c("Days without CO", "Days CO"),
+        value = c((current()$Days.with.AQI-current()$Days.CO)/current()$Days.with.AQI*100, current()$Days.CO/current()$Days.with.AQI*100)
+      )
+      
+      pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Purples","CO",direction = -1) +
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank()
+        )
+      pie
     }
-})
-
+  })
+  
   # pie chart of NO2
   output$no2_pie <- renderPlot({
     if(length(current()$State)==1){
       
-    df <- data.frame(
-      group = c("Days without NO2", "Days NO2"),
-      value = c((current()$Days.with.AQI-current()$Days.NO2)/current()$Days.with.AQI*100, current()$Days.NO2/current()$Days.with.AQI*100)
-    )
-    
-    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="PuBu","NO2",direction = -1) +
-      theme(
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        panel.border = element_blank()
+      df <- data.frame(
+        group = c("Days without NO2", "Days NO2"),
+        value = c((current()$Days.with.AQI-current()$Days.NO2)/current()$Days.with.AQI*100, current()$Days.NO2/current()$Days.with.AQI*100)
       )
-    pie
+      
+      pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="PuBu","NO2",direction = -1) +
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank()
+        )
+      pie
     }
   })
   
@@ -343,19 +346,19 @@ server <- function(input, output, session) {
   output$ozone_pie <- renderPlot({
     if(length(current()$State)==1){
       
-    df <- data.frame(
-      group = c("Days without Ozone", "Days Ozone"),
-      value = c((current()$Days.with.AQI-current()$Days.Ozone)/current()$Days.with.AQI*100, current()$Days.Ozone/current()$Days.with.AQI*100)
-    )
-    
-    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Blues","Ozone",direction = -1) +
-      theme(
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        panel.border = element_blank()
+      df <- data.frame(
+        group = c("Days without Ozone", "Days Ozone"),
+        value = c((current()$Days.with.AQI-current()$Days.Ozone)/current()$Days.with.AQI*100, current()$Days.Ozone/current()$Days.with.AQI*100)
       )
-    pie
+      
+      pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Blues","Ozone",direction = -1) +
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank()
+        )
+      pie
     }
   })
   
@@ -365,20 +368,20 @@ server <- function(input, output, session) {
   output$so2_pie <- renderPlot({
     
     if(length(current()$State)==1){
-    
-    df <- data.frame(
-      group = c("Days without SO2", "Days SO2"),
-      value = c((current()$Days.with.AQI-current()$Days.SO2)/current()$Days.with.AQI*100, current()$Days.SO2/current()$Days.with.AQI*100)
-    )
-    
-    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="BuGn","SO2",direction = -1) +
-      theme(
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        panel.border = element_blank()
+      
+      df <- data.frame(
+        group = c("Days without SO2", "Days SO2"),
+        value = c((current()$Days.with.AQI-current()$Days.SO2)/current()$Days.with.AQI*100, current()$Days.SO2/current()$Days.with.AQI*100)
       )
-    pie
+      
+      pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="BuGn","SO2",direction = -1) +
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank()
+        )
+      pie
     }
   })
   
@@ -386,19 +389,19 @@ server <- function(input, output, session) {
   output$pm25_pie <- renderPlot({
     if(length(current()$State)==1){
       
-    df <- data.frame(
-      group = c("Days without PM2.5", "Days PM2.5"),
-      value = c((current()$Days.with.AQI-current()$Days.PM2.5)/current()$Days.with.AQI*100, current()$Days.PM2.5/current()$Days.with.AQI*100)
-    )
-    
-    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="GnBu","PM2.5",direction = -1) +
-      theme(
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        panel.border = element_blank()
+      df <- data.frame(
+        group = c("Days without PM2.5", "Days PM2.5"),
+        value = c((current()$Days.with.AQI-current()$Days.PM2.5)/current()$Days.with.AQI*100, current()$Days.PM2.5/current()$Days.with.AQI*100)
       )
-    pie
+      
+      pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="GnBu","PM2.5",direction = -1) +
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank()
+        )
+      pie
     }
   })
   
@@ -406,53 +409,53 @@ server <- function(input, output, session) {
   output$pm10_pie <- renderPlot({
     if(length(current()$State)==1){
       
-    df <- data.frame(
-      group = c("Days without PM10", "Days PM10"),
-      value = c((current()$Days.with.AQI-current()$Days.PM10)/current()$Days.with.AQI*100, current()$Days.PM10/current()$Days.with.AQI*100)
-    )
-    
-    pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-      geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greens","PM10",direction = -1) +
-      theme(
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        panel.border = element_blank()
+      df <- data.frame(
+        group = c("Days without PM10", "Days PM10"),
+        value = c((current()$Days.with.AQI-current()$Days.PM10)/current()$Days.with.AQI*100, current()$Days.PM10/current()$Days.with.AQI*100)
       )
-    pie
+      
+      pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greens","PM10",direction = -1) +
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank()
+        )
+      pie
     }
   })
   
   # table of pollutants
   output$pollutants_table <- DT::renderDataTable(current()[, c('Days.CO', 'Days.NO2',"Days.Ozone", "Days.SO2", "Days.PM2.5", "Days.PM10")],
-                                          rownames = FALSE,
-                                          colnames = c('CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'), 
-                                          options = list(searching = FALSE,paging = FALSE,
-                                                         dom = 't'
-                                          ))
+                                                 rownames = FALSE,
+                                                 colnames = c('CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'), 
+                                                 options = list(searching = FALSE,paging = FALSE,
+                                                                dom = 't'
+                                                 ))
   
   # bar chart of pollutants
   output$pollutants_bar <- renderPlot({
     if(length(current()$State)==1){
       
-    df <- data.frame(
+      df <- data.frame(
+        
+        group = c('CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'),
+        value = c(current()$Days.CO, current()$Days.NO2, 
+                  current()$Days.Ozone,
+                  current()$Days.SO2,
+                  current()$Days.PM2.5,
+                  current()$Days.PM10)
+      )
       
-      group = c('CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'),
-      value = c(current()$Days.CO, current()$Days.NO2, 
-                current()$Days.Ozone,
-                current()$Days.SO2,
-                current()$Days.PM2.5,
-                current()$Days.PM10)
-    )
-    
-    bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) +
-      geom_bar(stat="identity") + coord_flip() + 
-      theme(
-        text = element_text(size=12),
-        legend.position="none"
-      )+ 
-      xlab("Detected Pollutant") + ylab("Days count") +
-      scale_fill_manual(values=c("#C3B5DB", "#ABB6D4", "#83BDDF","#A2DFA8", "#98D5B3", "#93D8CD"))
-    bar
+      bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) +
+        geom_bar(stat="identity") + coord_flip() + 
+        theme(
+          text = element_text(size=12),
+          legend.position="none"
+        )+ 
+        xlab("Detected Pollutant") + ylab("Days count") +
+        scale_fill_manual(values=c("#C3B5DB", "#ABB6D4", "#83BDDF","#A2DFA8", "#98D5B3", "#93D8CD"))
+      bar
     }
   })
   
@@ -523,19 +526,24 @@ server <- function(input, output, session) {
                                     "PM10" = "#53edd4"))
     # scale_fill_manual(values=c("#9B77D8", "#758fd6", "#68aed6","#6ed378", "#6ad197", "#66d6c4"))
     
-      # scale_color_discrete(breaks=c("Max","90th Percentile","Median"))
+    # scale_color_discrete(breaks=c("Max","90th Percentile","Median"))
   })
   
   # table of pollutants
   output$pollutants_time_table <- DT::renderDataTable(subset(dataset, State == selected_state() & County == selected_county())[, c('Year','Days.CO', 'Days.NO2',"Days.Ozone", "Days.SO2", "Days.PM2.5", "Days.PM10")],
-                                                 rownames = FALSE,
-                                                 colnames = c('Year','CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'), 
-                                                 options = list(searching = TRUE,paging = TRUE,lengthMenu = c(5, 10, 40), pageLength = 7
-                                                                # dom = 't'
-                                                 ))
+                                                      rownames = FALSE,
+                                                      colnames = c('Year','CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'), 
+                                                      options = list(searching = TRUE,paging = TRUE,lengthMenu = c(5, 10, 40), pageLength = 7
+                                                                     # dom = 't'
+                                                      ))
   
   # County on Leaflet Map
   output$map_county <- renderLeaflet({
+    
+    # Extracting long and lat of selected county from sites
+    site<-subset(sites, State.Name == selected_state() & County.Name == selected_county())
+    latit <- site$Latitude
+    longit <- site$Longitude
     
     xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
     
@@ -548,8 +556,8 @@ server <- function(input, output, session) {
                   # fillColor = ~colorQuantile("YlOrRd"),
                   highlightOptions = highlightOptions(color = "white", weight = 3,
                                                       bringToFront = TRUE)) %>%
-      setView(lng = -86.47289099999999, lat = 32.437458, zoom = 9) %>%
-      addMarkers(lng = -86.47289099999999, lat = 32.437458, label = "Selected County")
+      setView(lng = longit, lat = latit, zoom = 6) %>%
+      addMarkers(lng = -longit, lat = latit, label = "Selected County")
     
     # states <- readOGR("shp/cb_2013_us_state_20m.shp",
     #                   layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
@@ -573,7 +581,7 @@ server <- function(input, output, session) {
   
   )
   
-# End of server
+  # End of server
 }
 
 shinyApp(ui = ui, server = server)
