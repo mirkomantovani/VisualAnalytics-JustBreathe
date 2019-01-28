@@ -56,7 +56,8 @@ ui <- dashboardPage(
                      useShinyalert(),
                      menuItem("Year details for County", tabName = "pie"),
                      menuItem("County trends", tabName = "time"),
-                     menuItem("Compare Counties", tabName = "compare")
+                     menuItem("Compare Counties", tabName = "compare"),
+                     menuItem("About", tabName = "about")
                    ),
                    tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #60ECEC;color:white;}")),
                    tags$style(
@@ -122,7 +123,7 @@ ui <- dashboardPage(
       tabItem("pie",
               fluidRow(
                 column(6, box(title = "AQI levels", width = NULL,status = "primary",
-                              plotOutput("aqi_pie", height = "30vh"),
+                              fluidRow(column(8,plotOutput("aqi_pie", height = "30vh")),column(4,textOutput("missing_data"))),
                               plotOutput("aqi_bar", height = "25vh"),
                               div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
                 )),
@@ -146,11 +147,18 @@ ui <- dashboardPage(
               fluidRow(
                 # Input county with search
                 column(2,box(title = "County Selection",status = "success", width = NULL,
-                             column(12, fluidRow(selectizeInput("CountySearch", label = h5("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
+                             column(12, fluidRow(selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
                                                                 options = NULL)),
-                                    fluidRow(h1("internetInfo")),
-                                    fluidRow(h1(textOutput("sel_state"))),
-                                    fluidRow(h1(textOutput("sel_county")))))),
+                                    fluidRow(h3("State:")),
+                                    fluidRow(h4(textOutput("sel_state"))),
+                                    fluidRow(h3("County:")),
+                                    fluidRow(h4(textOutput("sel_county"))),
+                                    fluidRow(h3("Data:")),
+                                    fluidRow(h6(textOutput("data_years"))),
+                                    fluidRow(h6(textOutput("data_days")))
+                                    )
+                             )
+                       ),
                 # 2 tabs, (line plots and table, map)
                 column(10,
                        tabsetPanel(
@@ -178,6 +186,11 @@ ui <- dashboardPage(
       # THIRD MENU TAB
       tabItem("compare",
               h1("WIP")
+      ),
+      
+      # FOURTH MENU TAB
+      tabItem("about",
+              htmlOutput("about_out")
       )
       
       
@@ -470,6 +483,21 @@ server <- function(input, output, session) {
     selected_county()
   })
   
+  output$data_years <- renderText({ 
+    paste(nrow(subset(dataset, State == selected_state() & County == selected_county())),"years of data available")
+  })
+  
+  output$data_days <- renderText({ 
+    d<-subset(dataset, State == selected_state() & County == selected_county())
+    paste(round(mean(d$Days.with.AQI)),"days per year with data on average")
+  })
+  
+  output$missing_data <- renderText({
+    d <- current()
+    paste("The number of days with AQI data for the selected year is:",d$Days.with.AQI,", only the",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are therefore estimates")
+  })
+
+  
   # Time series of AQI statistics
   output$aqi_time <- renderPlot({
     df<-subset(dataset, State == selected_state() & County == selected_county())
@@ -571,28 +599,35 @@ server <- function(input, output, session) {
                                                       bringToFront = TRUE)) %>%
       setView(lng = computed_lng, lat = computed_lat, zoom = 6) %>%
       addMarkers(lng = computed_lng, lat = computed_lat, label = "Selected County")
-    
-    # states <- readOGR("shp/cb_2013_us_state_20m.shp",
-    #                   layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
-    # neStates <- subset(states, states$STUSPS %in% c(
-    #   "CT","ME","MA","NH","RI","VT","NY","NJ","PA"
-    # ))
-    # leaflet(neStates) %>%
-    #   addPolygons(color = "#444444", weight = 1, smoothFactor = 0.5,
-    #               opacity = 1.0, fillOpacity = 0.5,
-    #               fillColor = ~colorQuantile("YlOrRd", ALAND)(ALAND),
-    #               highlightOptions = highlightOptions(color = "white", weight = 2,
-    #                                                   bringToFront = TRUE))
-    # map <- leaflet(data = us.map, height = session$width)
-    # map <- addTiles(map)
-    # map <- setView(map, lng = -86.47289099999999, lat = 32.437458, zoom = 15)
-    # map <- addMarkers(map, lng = PumpLocations$x, lat = PumpLocations$y, label = "Pump")
-    # map <- addMarkers(map, lng = DeathLocations$x, lat = DeathLocations$y, label = as.character(DeathLocations$count), clusterOptions = markerClusterOptions())
-    # map
-    
-  }
+  })
   
-  )
+  # About HTML
+  output$about_out <- renderUI({
+    author <- "<h3>Mirko Mantovani</h3>
+    <br>
+    <a href='https://mmanto2.people.uic.edu/projects/JustBreathe.html'>Project webpage</a>
+    <br/>
+    <a href='https://github.com/mirkomantovani/VisualAnalytics-JustBreathe'>Github repository</a><br>"
+    libraries <- "<b>Used R libraries: </b> <br><br> 
+    <ul>
+      <li>shiny</li>
+      <li>shinydashboard</li>
+<li>ggplot2</li>
+<li>scales</li>
+<li>shinythemes</li>
+<li>dashboardthemes</li>
+<li>ggthemes</li>
+<li>shinyalert</li>
+<li>leaflet</li>
+<li>rgdal</li>
+<li>geojson</li>
+<li>geojsonio</li>
+    </ul><br>"
+    data <- "<b>Dataset Source:</b> <a href='https://aqs.epa.gov/aqsweb/airdata/download_files.html'>United States Environmental Protection Agency</a><br>
+    <a href='http://eric.clst.org/tech/usgeojson/e'>United States Counties shape in GeoJSON</a>"
+    HTML(paste(author, libraries, data))
+  })
+  
   
   # End of server
 }
