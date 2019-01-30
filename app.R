@@ -22,7 +22,7 @@ dataset <- do.call(rbind, datasets)
 
 sites <- read.table(file = "sites/aqs_sites.csv", sep=",",header = TRUE)
 
-xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
+# xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
 
 
 
@@ -48,9 +48,11 @@ for(s in states){
 ui <- dashboardPage(
   #skin = "black",
   dashboardHeader(
-    title = "Visual Analytics - Just Breathe",
-    titleWidth = 300),
+    title = "Visual Analytics - Just Breathe", #    title = div(id = "title", "Visual Analytics - Just Breathe"),
+    titleWidth = 400 #SAGE
+    ),
   dashboardSidebar(disable = FALSE, collapsed = TRUE,
+                   width = 400, #SAGE
                    
                    sidebarMenu(
                      useShinyalert(),
@@ -59,9 +61,27 @@ ui <- dashboardPage(
                      menuItem("Compare Counties", tabName = "compare"),
                      menuItem("About", tabName = "about")
                    ),
+                   # -moz-transform: scale(1.5, 1.5); /* Moz-browsers */
+                   #   zoom: 1.5; /* Other non-webkit browsers */
+                   #   zoom: 150%; /* Webkit browsers */
                    tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #60ECEC;color:white;}")),
                    tags$style(
-                     HTML("label{
+                     HTML("
+/*
+                        body {
+                        
+transform: scale(1.5);
+   transform-origin: 0 0;
+                        }
+
+
+#nozoom {
+transform: scale(0.666);
+
+}*/
+
+
+                          label{
                           color: rgb(255, 255, 255);
                           }
                           
@@ -102,20 +122,77 @@ ui <- dashboardPage(
                           background: rgb(0,170,183);
                           border-radius: 4px;
                           }
+
+                          .recalculating {opacity: 1.0;}
                           "
                           
                      )
                    ),
                    #selectInput("Year", "Select Year", years, selected = 2018),
                    
-                   selectInput(inputId = "State", "Select State", states, selected = 'Illinois'),
+                   selectInput(inputId = "State", "Select State", states, selected = 'Illinois',width = "200%"),
                    tags$style("#County {background-color:blue;}"),
-                   selectInput("County", "Select County", counties, selected = 'Adams'),
-                   sliderInput(inputId = "Year", 
+                   selectInput("County", "Select County", counties, selected = 'Adams',width = "200%"),
+                   div(id="nozoom",sliderInput(inputId = "Year", 
                                label = "Select Year", 
-                               value = 2018, min = 1980, max = 2018)
+                               value = 2018, min = 1980, max = 2018,width = "90%"))
                    ),
-  dashboardBody(
+  dashboardBody(tags$head(
+    tags$script(HTML('
+
+
+                
+                                var dimension = [0, 0];
+                  $(document).on("shiny:connected", function(e) {
+
+  //document.body.style.zoom = "100%";
+
+
+                  dimension[0] = window.innerWidth;
+                  dimension[1] = window.innerHeight;
+
+if(dimension[0] >= 2000){  //SAGE
+//document.write("<style>.rule1 { ... }</style>");
+  //document.body.style.fontSize = "500%";
+  document.body.style.zoom = "400%";
+
+nozooom = document.getElementById("nozoom");
+nozoom.style.zoom = "25%";
+
+//WHOLE CONTENT PANEL SIZE
+cont = document.getElementsByClassName("content");
+cont[0].style.zoom = "25%";
+cont[0].style.fontSize = "400%";
+
+//BOX TITLES SIZE
+titles = document.getElementsByClassName("box-title");
+for (var i = 0; i < titles.length; i++) {
+  titles[i].style.fontSize = "110%";
+}
+
+//SLIDER TEXT SIZE
+slider = document.getElementsByClassName("irs-grid-text");
+for (var i = 0; i < slider.length; i++) {
+  slider[i].style.fontSize = "200%";
+}
+document.getElementsByClassName("irs-single")[0].style.fontSize = "200%";
+document.getElementsByClassName("irs-min")[0].style.fontSize = "200%";
+
+labels = document.getElementsByClassName("control-label");
+labels[2].style.fontSize = "60px";
+
+
+}
+
+                  Shiny.onInputChange("dimension", dimension);
+                  });
+                  $(window).resize(function(e) {
+                  dimension[0] = window.innerWidth;
+                  dimension[1] = window.innerHeight;
+                  Shiny.onInputChange("dimension", dimension);
+                  });
+                  ')
+  )),
     shinyDashboardThemes(
       theme = "blue_gradient"
     ),
@@ -123,7 +200,7 @@ ui <- dashboardPage(
       tabItem("pie",
               fluidRow(
                 column(6, box(title = "AQI levels", width = NULL,status = "primary",
-                              fluidRow(column(8,plotOutput("aqi_pie", height = "30vh")),column(4,textOutput("missing_data"))),
+                              fluidRow(column(8,plotOutput("aqi_pie", height = "30vmin")),column(4,textOutput("missing_data"))),
                               plotOutput("aqi_bar", height = "25vh"),
                               div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
                 )),
@@ -185,7 +262,7 @@ ui <- dashboardPage(
       
       # THIRD MENU TAB
       tabItem("compare",
-              h1("WIP")
+              verbatimTextOutput("dimension_display")
       ),
       
       # FOURTH MENU TAB
@@ -205,6 +282,89 @@ ui <- dashboardPage(
 ############################################# SERVER ##############################################
 
 server <- function(input, output, session) {
+  
+  v <- reactiveValues(axis_title_size = 14, 
+                      axis_text_size = 12,
+                      legend_text_size = 5,
+                      legend_title_size = 5,
+                      legend_key_size = 1,
+                      pie_text_size = 5,
+                      slant_text_angle = 45,
+                      point_size = 1,
+                      zoom_level = 17,
+                      tooltip_width = 100,
+                      tooltip_hieght = 60,
+                      tooltip_text_size = 14,
+                      line_size = 1,
+                      tbl_pagelength = 7,
+                      annotate_text_size = 4,
+                      
+                      select_input_width = '100%'
+                      )
+  
+  
+  observeEvent(input$dimension, {
+    if(input$dimension[1] >= 2000){
+      v$axis_title_size <<- 30
+      v$axis_text_size <<- 30
+      v$legend_title_size <<- 30
+      v$legend_text_size <<- 30
+      v$legend_key_size <<- 5
+      v$pie_text_size <<- 10
+      v$slant_text_angle <<- 0
+      v$point_size <<- 4
+      v$zoom_level <<- 18
+      v$pump_icon_size <<- 18
+      v$tooltip_width <<- 180
+      v$tooltip_height <<- 80
+      v$tooltip_text_size <<- 28
+      v$line_size <<- 3
+      v$tbl_pagelength <<- 20
+      v$annotate_text_size <<- 8
+      
+      v$select_input_width <<- '200%'
+    } else {
+      v$axis_title_size = 14 
+      v$axis_text_size = 12
+      v$legend_text_size = 10
+      v$legend_title_size = 10
+      v$legend_key_size = 2
+      v$pie_text_size = 5
+      v$slant_text_angle = 45
+      v$point_size = 1
+      v$zoom_level = 17
+      v$tooltip_width = 100
+      v$tooltip_hieght = 60
+      v$tooltip_text_size = 14
+      v$line_size = 1
+      v$tbl_pagelength = 7
+      v$annotate_text_size = 4
+      
+      select_input_width = '100%'
+    }
+  })
+  
+  axis_title_size <- reactive({v$axis_title_size})
+  axis_text_size <- reactive({v$axis_text_size})
+  legend_text_size <- reactive({v$legend_text_size})
+  legend_key_size <- reactive({v$legend_key_size})
+  legend_title_size <- reactive({v$legend_title_size})
+  pie_text_size <- reactive({v$pie_text_size})
+  slant_text_angle <- reactive({v$slant_text_angle})
+  point_size <- reactive({v$point_size})
+  zoom_level <- reactive({v$zoom_level})
+  tooltip_width <- reactive({v$tooltip_width})
+  tooltip_height <- reactive({v$tooltip_height})
+  tooltip_text_size <- reactive({v$tooltip_text_size})
+  line_size <- reactive({v$line_size})
+  tbl_pagelength <- reactive({v$tbl_pagelength})
+  annotate_text_size <- reactive({v$annotate_text_size})
+  
+  select_input_width <- reactive({v$select_input_width})
+  
+  output$dimension_display <- renderText({
+    paste(input$dimension[1], input$dimension[2], input$dimension[1]/input$dimension[2])
+  })
   
   m_palette <-  scale_fill_manual(name = "",
                                   values = c('0 to 9' = '#08306b','10 to 19' = '#103a76', '20 to 29' = '#08519c',  '30 to 39' = '#2171b5',
@@ -269,7 +429,12 @@ server <- function(input, output, session) {
           #plot.background = element_rect(fill = "grey"),
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          panel.border = element_blank()
+          panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
         ) 
       
       pie
@@ -302,7 +467,17 @@ server <- function(input, output, session) {
           text = element_text(size=12),
           legend.position="none"
         )+ 
-        xlab("AQI level") + ylab("Days count")
+        xlab("AQI level") + ylab("Days count")+
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
+        )
       bar
     }
   })
@@ -332,7 +507,12 @@ server <- function(input, output, session) {
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          panel.border = element_blank()
+          panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
         )
       pie
     }
@@ -352,7 +532,12 @@ server <- function(input, output, session) {
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          panel.border = element_blank()
+          # panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
         )
       pie
     }
@@ -372,7 +557,12 @@ server <- function(input, output, session) {
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          panel.border = element_blank()
+          panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
         )
       pie
     }
@@ -395,7 +585,12 @@ server <- function(input, output, session) {
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          panel.border = element_blank()
+          panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
         )
       pie
     }
@@ -415,7 +610,12 @@ server <- function(input, output, session) {
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          panel.border = element_blank()
+          panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
         )
       pie
     }
@@ -435,7 +635,12 @@ server <- function(input, output, session) {
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          panel.border = element_blank()
+          panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
         )
       pie
     }
@@ -470,7 +675,17 @@ server <- function(input, output, session) {
           legend.position="none"
         )+ 
         xlab("Detected Pollutant") + ylab("Days count") +
-        scale_fill_manual(values=c("#C3B5DB", "#ABB6D4", "#83BDDF","#A2DFA8", "#98D5B3", "#93D8CD"))
+        scale_fill_manual(values=c("#C3B5DB", "#ABB6D4", "#83BDDF","#A2DFA8", "#98D5B3", "#93D8CD"))+
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank(),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size()),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
+        )
       bar
     }
   })
@@ -494,15 +709,31 @@ server <- function(input, output, session) {
   
   output$missing_data <- renderText({
     d <- current()
+    if(round(d$Days.with.AQI/365*100) == 100){
+      paste("The number of days with AQI data for the selected year is:",d$Days.with.AQI,",",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are accurate")
+    } else{
     paste("The number of days with AQI data for the selected year is:",d$Days.with.AQI,", only the",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are therefore estimates")
-  })
+    }
+    })
+  
+
 
   
   # Time series of AQI statistics
   output$aqi_time <- renderPlot({
     df<-subset(dataset, State == selected_state() & County == selected_county())
     ggplot(data = df, aes(x = Year)) +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        legend.text = element_text(size = legend_text_size()), 
+        legend.key.size = unit(legend_key_size(), 'line'),
+        axis.text = element_text(size = axis_text_size()),
+        axis.title = element_text(size = axis_title_size()),
+        legend.title = element_text(size = legend_title_size())
+        ) +
       geom_line(aes(y = Max.AQI, color = "Max"), size = 1, group = 1) + 
       geom_point(aes(y = Max.AQI, color = "Max"), size = 3) +
       geom_line(aes(y = X90th.Percentile.AQI, color = "90th Percentile"), size = 1, group = 3) +
@@ -532,7 +763,17 @@ server <- function(input, output, session) {
     #             s_county$Days.PM10/s_county$Days.with.AQI*100)
     # )
     ggplot(data = s_county, aes(x = Year)) +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        legend.text = element_text(size = legend_text_size()), 
+        legend.key.size = unit(legend_key_size(), 'line'),
+        axis.text = element_text(size = axis_text_size()),
+        axis.title = element_text(size = axis_title_size()),
+        legend.title = element_text(size = legend_title_size())
+        ) +
       geom_line(aes(y = Days.CO, color = "CO"), size = 1, group = 1) + 
       geom_point(aes(y = Days.CO, color = "CO"), size = 3) +
       geom_line(aes(y = Days.NO2, color = "NO2"), size = 1, group = 2) +
@@ -564,7 +805,7 @@ server <- function(input, output, session) {
   output$pollutants_time_table <- DT::renderDataTable(subset(dataset, State == selected_state() & County == selected_county())[, c('Year','Days.CO', 'Days.NO2',"Days.Ozone", "Days.SO2", "Days.PM2.5", "Days.PM10")],
                                                       rownames = FALSE,
                                                       colnames = c('Year','CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'), 
-                                                      options = list(searching = TRUE,paging = TRUE,lengthMenu = c(5, 10, 40), pageLength = 7
+                                                      options = list(searching = TRUE,paging = TRUE,lengthMenu = c(5, 10, 40), pageLength = tbl_pagelength()
                                                                      # dom = 't'
                                                       ))
   
