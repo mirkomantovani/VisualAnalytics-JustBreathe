@@ -156,8 +156,11 @@ if(dimension[0] >= 2000){  //SAGE
   //document.body.style.fontSize = "500%";
   document.body.style.zoom = "400%";
 
-nozooom = document.getElementById("nozoom");
+nozoom = document.getElementById("nozoom");
 nozoom.style.zoom = "25%";
+
+boxzoom = document.getElementById("boxtozoom");
+boxzoom.style.zoom = "500%";
 
 //WHOLE CONTENT PANEL SIZE
 cont = document.getElementsByClassName("content");
@@ -200,17 +203,17 @@ labels[2].style.fontSize = "60px";
       tabItem("pie",
               fluidRow(
                 column(6, box(title = "AQI levels", width = NULL,status = "primary",
-                              fluidRow(column(8,plotOutput("aqi_pie", height = "30vmin")),column(4,textOutput("missing_data"))),
-                              plotOutput("aqi_bar", height = "25vh"),
+                              fluidRow(column(8,plotOutput("aqi_pie", height = "50vmin")),column(4,textOutput("missing_data"))),
+                              plotOutput("aqi_bar", height = "30vmin"),
                               div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
                 )),
                 column(6, box(title = "Pollutants",status = "primary", width = NULL, 
                               tabsetPanel(
                                 tabPanel("Percentage of days",
-                                         fluidRow(column(4,plotOutput("co_pie", height = "24vh")),column(4,plotOutput("no2_pie", height = "24vh")),column(4,plotOutput("ozone_pie", height = "24vh"))),
-                                         fluidRow(column(4,plotOutput("so2_pie", height = "24vh")),column(4,plotOutput("pm25_pie", height = "24vh")),column(4,plotOutput("pm10_pie", height = "24vh")))
+                                         fluidRow(column(4,plotOutput("co_pie", height = "38vmin")),column(4,plotOutput("no2_pie", height = "38vmin")),column(4,plotOutput("ozone_pie", height = "38vmin"))),
+                                         fluidRow(column(4,plotOutput("so2_pie", height = "38vmin")),column(4,plotOutput("pm25_pie", height = "38vmin")),column(4,plotOutput("pm10_pie", height = "38vmin")))
                                 ),
-                                tabPanel("Bar chart", plotOutput("pollutants_bar", height = "48vh"))
+                                tabPanel("Bar chart", plotOutput("pollutants_bar", height = "76vmin"))
                               ),
                               div(DT::dataTableOutput("pollutants_table"), style = "font-size:80%")
                               
@@ -224,7 +227,7 @@ labels[2].style.fontSize = "60px";
               fluidRow(
                 # Input county with search
                 column(2,box(title = "County Selection",status = "success", width = NULL,
-                             column(12, fluidRow(selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
+                             div(column(12, fluidRow(selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
                                                                 options = NULL)),
                                     fluidRow(h3("State:")),
                                     fluidRow(h4(textOutput("sel_state"))),
@@ -233,19 +236,19 @@ labels[2].style.fontSize = "60px";
                                     fluidRow(h3("Data:")),
                                     fluidRow(h6(textOutput("data_years"))),
                                     fluidRow(h6(textOutput("data_days")))
-                                    )
+                                    ),id = "boxtozoom")
                              )
                        ),
                 # 2 tabs, (line plots and table, map)
                 column(10,
                        tabsetPanel(
                          tabPanel("AQI Time Series",
-                                  plotOutput("aqi_time", height = "70vh")
+                                  plotOutput("aqi_time", height = "85vmin")
                          ),
                          tabPanel("Pollutants Percentage Time Series",
                                   tabsetPanel(
                                     tabPanel("Line Plot",
-                                             plotOutput("pollutants_time", height = "60vh")
+                                             plotOutput("pollutants_time", height = "80vmin")
                                     ),
                                     tabPanel("Table",
                                              div(DT::dataTableOutput("pollutants_time_table"), style = "font-size:90%")
@@ -296,7 +299,7 @@ server <- function(input, output, session) {
                       tooltip_hieght = 60,
                       tooltip_text_size = 14,
                       line_size = 1,
-                      tbl_pagelength = 7,
+                      tbl_pagelength = 20,
                       annotate_text_size = 4,
                       
                       select_input_width = '100%'
@@ -305,20 +308,19 @@ server <- function(input, output, session) {
   
   observeEvent(input$dimension, {
     if(input$dimension[1] >= 2000){
-      v$axis_title_size <<- 30
-      v$axis_text_size <<- 30
-      v$legend_title_size <<- 30
-      v$legend_text_size <<- 30
-      v$legend_key_size <<- 5
-      v$pie_text_size <<- 10
+      v$axis_title_size <<- 40
+      v$axis_text_size <<- 40
+      v$legend_title_size <<- 40
+      v$legend_text_size <<- 40
+      v$legend_key_size <<- 8
+      v$pie_text_size <<- 15
       v$slant_text_angle <<- 0
       v$point_size <<- 4
       v$zoom_level <<- 18
-      v$pump_icon_size <<- 18
       v$tooltip_width <<- 180
       v$tooltip_height <<- 80
       v$tooltip_text_size <<- 28
-      v$line_size <<- 3
+      v$line_size <<- 5
       v$tbl_pagelength <<- 20
       v$annotate_text_size <<- 8
       
@@ -337,7 +339,7 @@ server <- function(input, output, session) {
       v$tooltip_hieght = 60
       v$tooltip_text_size = 14
       v$line_size = 1
-      v$tbl_pagelength = 7
+      v$tbl_pagelength = 20
       v$annotate_text_size = 4
       
       select_input_width = '100%'
@@ -498,12 +500,15 @@ server <- function(input, output, session) {
     if(length(current()$State)==1){
       
       df <- data.frame(
-        group = c("Days without CO", "Days CO"),
-        value = c((current()$Days.with.AQI-current()$Days.CO)/current()$Days.with.AQI*100, current()$Days.CO/current()$Days.with.AQI*100)
+        group = c("Days without CO","Days with CO"),
+        value = c((current()$Days.with.AQI-current()$Days.CO)/current()$Days.with.AQI*100,current()$Days.CO/current()$Days.with.AQI*100)
       )
       
+      df$group <- factor(df$group, levels = c("Days without CO","Days with CO"))
+      
+
       pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Purples","CO",direction = -1) +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_manual(values=c("#efefba", "#d6d600")) +
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
@@ -527,8 +532,11 @@ server <- function(input, output, session) {
         value = c((current()$Days.with.AQI-current()$Days.NO2)/current()$Days.with.AQI*100, current()$Days.NO2/current()$Days.with.AQI*100)
       )
       
+      df$group <- factor(df$group, levels = c("Days without NO2","Days NO2"))
+      
+      
       pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="PuBu","NO2",direction = -1) +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_manual(values=c("#bee5ca", "#03c63e")) +
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
@@ -552,8 +560,11 @@ server <- function(input, output, session) {
         value = c((current()$Days.with.AQI-current()$Days.Ozone)/current()$Days.with.AQI*100, current()$Days.Ozone/current()$Days.with.AQI*100)
       )
       
+      df$group <- factor(df$group, levels = c("Days without Ozone","Days Ozone"))
+      
+      
       pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Blues","Ozone",direction = -1) +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_manual(values=c("#b7dfe2", "#01a6b5")) +
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
@@ -580,8 +591,11 @@ server <- function(input, output, session) {
         value = c((current()$Days.with.AQI-current()$Days.SO2)/current()$Days.with.AQI*100, current()$Days.SO2/current()$Days.with.AQI*100)
       )
       
+      df$group <- factor(df$group, levels = c("Days without SO2","Days SO2"))
+      
+      
       pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="BuGn","SO2",direction = -1) +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_manual(values=c("#c6b6d8", "#5807b7")) +
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
@@ -605,8 +619,11 @@ server <- function(input, output, session) {
         value = c((current()$Days.with.AQI-current()$Days.PM2.5)/current()$Days.with.AQI*100, current()$Days.PM2.5/current()$Days.with.AQI*100)
       )
       
+      df$group <- factor(df$group, levels = c("Days without PM2.5","Days PM2.5"))
+      
+      
       pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="GnBu","PM2.5",direction = -1) +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_manual(values=c("#e2d0b5", "#c97c08")) +
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
@@ -630,8 +647,11 @@ server <- function(input, output, session) {
         value = c((current()$Days.with.AQI-current()$Days.PM10)/current()$Days.with.AQI*100, current()$Days.PM10/current()$Days.with.AQI*100)
       )
       
+      df$group <- factor(df$group, levels = c("Days without PM10","Days PM10"))
+      
+      
       pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
-        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greens","PM10",direction = -1) +
+        geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_manual(values=c("#e0b1b1", "#c40909")) +
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
@@ -734,12 +754,12 @@ server <- function(input, output, session) {
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size())
         ) +
-      geom_line(aes(y = Max.AQI, color = "Max"), size = 1, group = 1) + 
-      geom_point(aes(y = Max.AQI, color = "Max"), size = 3) +
-      geom_line(aes(y = X90th.Percentile.AQI, color = "90th Percentile"), size = 1, group = 3) +
-      geom_point(aes(y = X90th.Percentile.AQI, color = "90th Percentile"), size = 3) +
-      geom_line(aes(y = Median.AQI, color = "Median"), size = 1, group = 2) +
-      geom_point(aes(y = Median.AQI, color = "Median"), size = 3) +
+      geom_line(aes(y = Max.AQI, color = "Max"), size = line_size(), group = 1) + 
+      geom_point(aes(y = Max.AQI, color = "Max"), size = line_size()*3) +
+      geom_line(aes(y = X90th.Percentile.AQI, color = "90th Percentile"), size = line_size(), group = 3) +
+      geom_point(aes(y = X90th.Percentile.AQI, color = "90th Percentile"), size = line_size()*3) +
+      geom_line(aes(y = Median.AQI, color = "Median"), size = line_size(), group = 2) +
+      geom_point(aes(y = Median.AQI, color = "Median"), size = line_size()*3) +
       labs(x = "Year", y = "Air Quality Index") +
       scale_x_continuous(breaks = round(seq(min(df$Year), max(df$Year), by = 1),1)) +
       # scale_color_manual(name = "Statistics",
@@ -774,28 +794,28 @@ server <- function(input, output, session) {
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size())
         ) +
-      geom_line(aes(y = Days.CO, color = "CO"), size = 1, group = 1) + 
-      geom_point(aes(y = Days.CO, color = "CO"), size = 3) +
-      geom_line(aes(y = Days.NO2, color = "NO2"), size = 1, group = 2) +
-      geom_point(aes(y = Days.NO2, color = "NO2"), size = 3) +
-      geom_line(aes(y = Days.Ozone, color = "Ozone"), size = 1, group = 3) +
-      geom_point(aes(y = Days.Ozone, color = "Ozone"), size = 3) +
-      geom_line(aes(y = Days.SO2, color = "SO2"), size = 1, group = 4) +
-      geom_point(aes(y = Days.SO2, color = "SO2"), size = 3) +
-      geom_line(aes(y = Days.PM2.5, color = "PM2.5"), size = 1, group = 5) +
-      geom_point(aes(y = Days.PM2.5, color = "PM2.5"), size = 3) +
-      geom_line(aes(y = Days.PM10, color = "PM10"), size = 1, group = 6) +
-      geom_point(aes(y = Days.PM10, color = "PM10"), size = 3) +
+      geom_line(aes(y = Days.CO, color = "CO"), size = line_size(), group = 1) + 
+      geom_point(aes(y = Days.CO, color = "CO"), size = line_size()*3) +
+      geom_line(aes(y = Days.NO2, color = "NO2"), size = line_size(), group = 2) +
+      geom_point(aes(y = Days.NO2, color = "NO2"), size = line_size()*3) +
+      geom_line(aes(y = Days.Ozone, color = "Ozone"), size = line_size(), group = 3) +
+      geom_point(aes(y = Days.Ozone, color = "Ozone"), size = line_size()*3) +
+      geom_line(aes(y = Days.SO2, color = "SO2"), size = line_size(), group = 4) +
+      geom_point(aes(y = Days.SO2, color = "SO2"), size = line_size()*3) +
+      geom_line(aes(y = Days.PM2.5, color = "PM2.5"), size = line_size(), group = 5) +
+      geom_point(aes(y = Days.PM2.5, color = "PM2.5"), size = line_size()*3) +
+      geom_line(aes(y = Days.PM10, color = "PM10"), size = line_size(), group = 6) +
+      geom_point(aes(y = Days.PM10, color = "PM10"), size = line_size()*3) +
       labs(x = "Year", y = "Percentage of Pollutant") +
       scale_x_continuous(breaks = round(seq(min(s_county$Year), max(s_county$Year), by = 1),1)) +
       scale_y_continuous(breaks = round(seq(min(s_county[14:19]), max(s_county[14:19]), by = 10),1)) +
       scale_color_manual(name = "Statistics",
-                         values = c("CO" = "#8a63cc",
-                                    "NO2" = "#514fc6",
-                                    "Ozone" = "#409ace",
-                                    "SO2" = "#55e864",
-                                    "PM2.5" = "#3cad69",
-                                    "PM10" = "#53edd4"))
+                         values = c("CO" = "#c6c60f",
+                                    "NO2" = "#13c649",
+                                    "Ozone" = "#0fa2af",
+                                    "SO2" = "#5610a8",
+                                    "PM2.5" = "#cc8112",
+                                    "PM10" = "#ba1010"))
     # scale_fill_manual(values=c("#9B77D8", "#758fd6", "#68aed6","#6ed378", "#6ad197", "#66d6c4"))
     
     # scale_color_discrete(breaks=c("Max","90th Percentile","Median"))
@@ -844,7 +864,7 @@ server <- function(input, output, session) {
   
   # About HTML
   output$about_out <- renderUI({
-    author <- "<h3>Mirko Mantovani</h3>
+    author <- "<h1>Mirko Mantovani</h1>
     <br>
     <a href='https://mmanto2.people.uic.edu/projects/JustBreathe.html'>Project webpage</a>
     <br/>
