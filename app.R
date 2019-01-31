@@ -14,6 +14,8 @@ library(leaflet)
 library(rgdal)
 library(geojson)
 library(geojsonio)
+library(colourpicker)
+library(shinyWidgets)
 
 # importing datasets
 temp = list.files(pattern="*.csv")
@@ -245,15 +247,35 @@ labels[2].style.fontSize = "60px";
               fluidRow(
                 # Input county with search
                 column(2,box(title = "County Selection",status = "success", width = NULL,
-                             div(column(12, fluidRow(selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE,
-                                                                options = NULL)),
-                                    fluidRow(h3("State:")),
-                                    fluidRow(h4(textOutput("sel_state"))),
-                                    fluidRow(h3("County:")),
-                                    fluidRow(h4(textOutput("sel_county"))),
-                                    fluidRow(h3("Data:")),
-                                    fluidRow(h6(textOutput("data_years"))),
-                                    fluidRow(h6(textOutput("data_days")))
+                             div(column(12, 
+                                        
+                                        dropdownButton(
+                                          tags$h3("Other colors"),
+                                          checkboxGroupButtons(
+                                            inputId = "textColor", label = h5("Text and Grid color"), 
+                                            choices = c("white", "black"), 
+                                            justified = TRUE, status = "primary", selected = "white",
+                                            checkIcon = list(yes = icon("ok-sign", lib = "glyphicon"), no = icon("remove-sign", lib = "glyphicon"))
+                                          ),
+                                          colourInput("colorCO", h5("Select color CO"), value = "#c6c60f"),
+                                          colourInput("colorNO2", h5("Select color NO2"), value = "#13c649"),
+                                          colourInput("colorOZONE", h5("Select color Ozone"), value = "#0fa2af"),
+                                          colourInput("colorSO2", h5("Select color SO2"), value = "#5610a8"),
+                                          colourInput("colorPM25", h5("Select color PM2.5"), value = "#cc8112"),
+                                          colourInput("colorPM10", h5("Select color PM10"), value = "#ba1010"),
+                                          circle = TRUE, status = "danger", icon = icon("gear"), width = "300px",
+                                          tooltip = tooltipOptions(title = "Click to open")
+                                        ),
+                                    selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE, options = NULL),
+                                    h3("State:"),
+                                    h4(textOutput("sel_state")),
+                                    h3("County:"),
+                                    h4(textOutput("sel_county")),
+                                    h3("Data:"),
+                                    h6(textOutput("data_years")),
+                                    h6(textOutput("data_days")),
+                                    colourInput("backgroundColor", h3("Select color"), value = "#005669")
+                                    
                                     ),class = "boxtozoom")
                              )
                        ),
@@ -875,16 +897,17 @@ server <- function(input, output, session) {
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         panel.border = element_blank(),
-        plot.background = element_rect(color = NA, fill = "#edf5f7"),
-        legend.background = element_rect(color = NA, fill = "#edf5f7"),
-        panel.background = element_rect(fill = "#edf5f7", color  =  NA),
-        panel.grid.major = element_line(color = "black"),  
-        panel.grid.minor = element_line(color = "black"),
-        legend.text = element_text(size = legend_text_size()), 
+        plot.background = element_rect(color = NA, fill = input$backgroundColor),
+        legend.background = element_rect(color = NA, fill = input$backgroundColor),
+        legend.key = element_rect(color = NA, fill = input$backgroundColor),
+        panel.background = element_rect(fill = input$backgroundColor, color  =  NA),
+        panel.grid.major = element_line(color = input$textColor),  
+        panel.grid.minor = element_line(color = input$textColor),
+        legend.text = element_text(size = legend_text_size(), color = input$textColor), 
         legend.key.size = unit(legend_key_size(), 'line'),
-        axis.text = element_text(size = axis_text_size(), color = "black"),
+        axis.text = element_text(size = axis_text_size(), color = input$textColor),
         axis.title = element_text(size = axis_title_size()),
-        legend.title = element_text(size = legend_title_size())
+        legend.title = element_text(size = legend_title_size(), color = input$textColor)
         ) +
       geom_line(aes(y = Max.AQI, color = "Max"), size = line_size(), group = 1) + 
       geom_point(aes(y = Max.AQI, color = "Max"), size = line_size()*3) +
@@ -920,16 +943,17 @@ server <- function(input, output, session) {
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         panel.border = element_blank(),
-        plot.background = element_rect(color = NA, fill = "#edf5f7"),
-        legend.background = element_rect(color = NA, fill = "#edf5f7"),
-        panel.background = element_rect(fill = "#edf5f7", color  =  NA),
-        panel.grid.major = element_line(color = "black"),  
-        panel.grid.minor = element_line(color = "black"),
-        legend.text = element_text(size = legend_text_size()), 
+        plot.background = element_rect(color = NA, fill = input$backgroundColor),
+        legend.background = element_rect(color = NA, fill = input$backgroundColor),
+        legend.key = element_rect(color = NA, fill = input$backgroundColor),
+        panel.background = element_rect(fill = input$backgroundColor, color  =  NA),
+        panel.grid.major = element_line(color = input$textColor),  
+        panel.grid.minor = element_line(color = input$textColor),
+        legend.text = element_text(size = legend_text_size(), color = input$textColor), 
         legend.key.size = unit(legend_key_size(), 'line'),
-        axis.text = element_text(size = axis_text_size(), color = "black"),
+        axis.text = element_text(size = axis_text_size(), color = input$textColor),
         axis.title = element_text(size = axis_title_size()),
-        legend.title = element_text(size = legend_title_size())
+        legend.title = element_text(size = legend_title_size(), color = input$textColor)
         ) +
       geom_line(aes(y = Days.CO, color = "CO"), size = line_size(), group = 1) + 
       geom_point(aes(y = Days.CO, color = "CO"), size = line_size()*3) +
@@ -947,12 +971,12 @@ server <- function(input, output, session) {
       scale_x_continuous(breaks = round(seq(min(s_county$Year), max(s_county$Year), by = 1),1)) +
       scale_y_continuous(breaks = round(seq(min(s_county[14:19]), max(s_county[14:19]), by = 10),1)) +
       scale_color_manual(name = "Statistics",
-                         values = c("CO" = "#c6c60f",
-                                    "NO2" = "#13c649",
-                                    "Ozone" = "#0fa2af",
-                                    "SO2" = "#5610a8",
-                                    "PM2.5" = "#cc8112",
-                                    "PM10" = "#ba1010"))
+                         values = c("CO" = input$colorCO,
+                                    "NO2" = input$colorNO2,
+                                    "Ozone" = input$colorOZONE,
+                                    "SO2" = input$colorSO2,
+                                    "PM2.5" = input$colorPM25,
+                                    "PM10" = input$colorPM10))
     # scale_fill_manual(values=c("#9B77D8", "#758fd6", "#68aed6","#6ed378", "#6ad197", "#66d6c4"))
     
     # scale_color_discrete(breaks=c("Max","90th Percentile","Median"))
