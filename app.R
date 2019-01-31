@@ -22,7 +22,7 @@ dataset <- do.call(rbind, datasets)
 
 sites <- read.table(file = "sites/aqs_sites.csv", sep=",",header = TRUE)
 
-# xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
+xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
 
 
 
@@ -79,6 +79,16 @@ transform: scale(1.5);
 transform: scale(0.666);
 
 }*/
+
+.content-wrapper, .right-side {
+    background: rgb(0, 114, 138);
+}
+
+.box {
+    background: rgb(188, 218, 224);
+    border-radius: 5px;
+    box-shadow: 0px 1px 20px 0px rgb(0, 24, 29);
+}
 
 
                           label{
@@ -159,8 +169,10 @@ if(dimension[0] >= 2000){  //SAGE
 nozoom = document.getElementById("nozoom");
 nozoom.style.zoom = "25%";
 
-boxzoom = document.getElementById("boxtozoom");
-boxzoom.style.zoom = "500%";
+boxzoom = document.getElementsByClassName("boxtozoom");
+for (var i = 0; i < boxzoom.length; i++) {
+  boxzoom[i].style.zoom = "500%";
+                     }
 
 //WHOLE CONTENT PANEL SIZE
 cont = document.getElementsByClassName("content");
@@ -236,7 +248,7 @@ labels[2].style.fontSize = "60px";
                                     fluidRow(h3("Data:")),
                                     fluidRow(h6(textOutput("data_years"))),
                                     fluidRow(h6(textOutput("data_days")))
-                                    ),id = "boxtozoom")
+                                    ),class = "boxtozoom")
                              )
                        ),
                 # 2 tabs, (line plots and table, map)
@@ -265,7 +277,21 @@ labels[2].style.fontSize = "60px";
       
       # THIRD MENU TAB
       tabItem("compare",
-              verbatimTextOutput("dimension_display")
+              fluidRow(
+                # Input county with search
+                column(2,box(title = "Counties Selection",status = "success", width = NULL,
+                             div(column(12, 
+                                        fluidRow(selectizeInput("SelCounty1", label = h4("Search County 1"), sort(all_counties), selected = NULL, multiple = FALSE,options = NULL)),
+                                        fluidRow(selectizeInput("SelCounty2", label = h4("Search County 2"), sort(all_counties), selected = NULL, multiple = FALSE,options = NULL)),
+                                        fluidRow(selectizeInput("SelCounty3", label = h4("Search County 3"), sort(all_counties), selected = NULL, multiple = FALSE,options = NULL))
+                             ),class = "boxtozoom")
+                ),
+                box(title = "Counties location",status = "success", width = NULL,
+                             leafletOutput("map_counties"))
+                ),
+                column(10,h1("wip"))
+                
+              )
       ),
       
       # FOURTH MENU TAB
@@ -288,6 +314,8 @@ server <- function(input, output, session) {
   
   v <- reactiveValues(axis_title_size = 14, 
                       axis_text_size = 12,
+                      margin_y = 30,
+                      margin_x = 0,
                       legend_text_size = 5,
                       legend_title_size = 5,
                       legend_key_size = 1,
@@ -310,6 +338,8 @@ server <- function(input, output, session) {
     if(input$dimension[1] >= 2000){
       v$axis_title_size <<- 40
       v$axis_text_size <<- 40
+      v$margin_y <<- 0
+      v$margin_x <<- 30
       v$legend_title_size <<- 40
       v$legend_text_size <<- 40
       v$legend_key_size <<- 8
@@ -328,6 +358,8 @@ server <- function(input, output, session) {
     } else {
       v$axis_title_size = 14 
       v$axis_text_size = 12
+      v$margin_y = 40
+      v$margin_x = 0
       v$legend_text_size = 10
       v$legend_title_size = 10
       v$legend_key_size = 2
@@ -348,6 +380,8 @@ server <- function(input, output, session) {
   
   axis_title_size <- reactive({v$axis_title_size})
   axis_text_size <- reactive({v$axis_text_size})
+  margin_x <- reactive({v$margin_x})
+  margin_y <- reactive({v$margin_y})
   legend_text_size <- reactive({v$legend_text_size})
   legend_key_size <- reactive({v$legend_key_size})
   legend_title_size <- reactive({v$legend_title_size})
@@ -400,10 +434,32 @@ server <- function(input, output, session) {
     strsplit(input$CountySearch," - ")[[1]][1]
   })
   
-  # observeEvent(input$CountySearch,{
-  #   
-  #   
-  # })
+  selected_state1 <- reactive({
+    strsplit(input$SelCounty1," - ")[[1]][2]
+    # }
+  })
+  
+  selected_county1 <- reactive({
+    strsplit(input$SelCounty1," - ")[[1]][1]
+  })
+  
+  selected_state2 <- reactive({
+    strsplit(input$SelCounty2," - ")[[1]][2]
+    # }
+  })
+  
+  selected_county2 <- reactive({
+    strsplit(input$SelCounty2," - ")[[1]][1]
+  })
+  
+  selected_state3 <- reactive({
+    strsplit(input$SelCounty3," - ")[[1]][2]
+    # }
+  })
+  
+  selected_county3 <- reactive({
+    strsplit(input$SelCounty3," - ")[[1]][1]
+  })
   
   diocane<- reactive({data.frame(current()$Good.Days,current()$Moderate.Days)})
   
@@ -425,11 +481,18 @@ server <- function(input, output, session) {
                   isolate(current())$Hazardous.Days/isolate(current())$Days.with.AQI*100)
       )
       
-      pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
+      df$group <- factor(df$group, levels = c("Percentage of Good Days", "Percentage of Moderate Days", "Percentage of Unhealthy for Sensitive Groups Days", "Percentage of Very Unhealthy Days", "Percentage of Hazardous Days"))
+      
+      
+      pie <- ggplot(df, aes(x="", y=value, fill=group)) + #theme_minimal() +
         geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_brewer(palette="Greys","AQI Level") +
         theme(
-          #plot.background = element_rect(fill = "grey"),
           axis.title.x = element_blank(),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          strip.background = element_rect(fill = "#bcdae0", color = "#bcdae0"),
+          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
           legend.text = element_text(size = legend_text_size()), 
@@ -461,6 +524,9 @@ server <- function(input, output, session) {
                   current()$Hazardous.Days)
       )
       
+      df$group <- factor(df$group, levels = c("Good", "Moderate", "Unhealthy for Sensitive Groups", "Very Unhealthy", "Hazardous"))
+      
+      
       # bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + geom_bar(stat="identity") + scale_fill_brewer(palette="Blues") 
       
       bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + scale_fill_brewer(palette="Greys") +
@@ -474,9 +540,14 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          panel.grid.major = element_line(color = "black"),  
+          panel.grid.minor = element_line(color = "black"),
           legend.text = element_text(size = legend_text_size()), 
           legend.key.size = unit(legend_key_size(), 'line'),
-          axis.text = element_text(size = axis_text_size()),
+          axis.text = element_text(size = axis_text_size(),color = "black"),
           axis.title = element_text(size = axis_title_size()),
           legend.title = element_text(size = legend_title_size())
         )
@@ -513,12 +584,17 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
+          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          strip.background = element_rect(fill = "#bcdae0", color = "#bcdae0"),
           legend.text = element_text(size = legend_text_size()), 
           legend.key.size = unit(legend_key_size(), 'line'),
           axis.text = element_text(size = axis_text_size()),
           axis.title = element_text(size = axis_title_size()),
           legend.title = element_text(size = legend_title_size())
-        )
+        ) 
       pie
     }
   })
@@ -540,7 +616,12 @@ server <- function(input, output, session) {
         theme(
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          # panel.border = element_blank(),
+          panel.border = element_blank(),
+          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          strip.background = element_rect(fill = "#bcdae0", color = "#bcdae0"),
           legend.text = element_text(size = legend_text_size()), 
           legend.key.size = unit(legend_key_size(), 'line'),
           axis.text = element_text(size = axis_text_size()),
@@ -569,6 +650,11 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
+          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          strip.background = element_rect(fill = "#bcdae0", color = "#bcdae0"),
           legend.text = element_text(size = legend_text_size()), 
           legend.key.size = unit(legend_key_size(), 'line'),
           axis.text = element_text(size = axis_text_size()),
@@ -600,6 +686,11 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
+          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          strip.background = element_rect(fill = "#bcdae0", color = "#bcdae0"),
           legend.text = element_text(size = legend_text_size()), 
           legend.key.size = unit(legend_key_size(), 'line'),
           axis.text = element_text(size = axis_text_size()),
@@ -628,6 +719,11 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
+          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          strip.background = element_rect(fill = "#bcdae0", color = "#bcdae0"),
           legend.text = element_text(size = legend_text_size()), 
           legend.key.size = unit(legend_key_size(), 'line'),
           axis.text = element_text(size = axis_text_size()),
@@ -656,6 +752,11 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
+          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          strip.background = element_rect(fill = "#bcdae0", color = "#bcdae0"),
           legend.text = element_text(size = legend_text_size()), 
           legend.key.size = unit(legend_key_size(), 'line'),
           axis.text = element_text(size = axis_text_size()),
@@ -700,9 +801,14 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          panel.grid.major = element_line(color = "black"),  
+          panel.grid.minor = element_line(color = "black"),
           legend.text = element_text(size = legend_text_size()), 
           legend.key.size = unit(legend_key_size(), 'line'),
-          axis.text = element_text(size = axis_text_size()),
+          axis.text = element_text(size = axis_text_size(), color = "black"),
           axis.title = element_text(size = axis_title_size()),
           legend.title = element_text(size = legend_title_size())
         )
@@ -748,9 +854,14 @@ server <- function(input, output, session) {
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         panel.border = element_blank(),
+        plot.background = element_rect(color = NA, fill = "#edf5f7"),
+        legend.background = element_rect(color = NA, fill = "#edf5f7"),
+        panel.background = element_rect(fill = "#edf5f7", color  =  NA),
+        panel.grid.major = element_line(color = "black"),  
+        panel.grid.minor = element_line(color = "black"),
         legend.text = element_text(size = legend_text_size()), 
         legend.key.size = unit(legend_key_size(), 'line'),
-        axis.text = element_text(size = axis_text_size()),
+        axis.text = element_text(size = axis_text_size(), color = "black"),
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size())
         ) +
@@ -788,9 +899,14 @@ server <- function(input, output, session) {
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         panel.border = element_blank(),
+        plot.background = element_rect(color = NA, fill = "#edf5f7"),
+        legend.background = element_rect(color = NA, fill = "#edf5f7"),
+        panel.background = element_rect(fill = "#edf5f7", color  =  NA),
+        panel.grid.major = element_line(color = "black"),  
+        panel.grid.minor = element_line(color = "black"),
         legend.text = element_text(size = legend_text_size()), 
         legend.key.size = unit(legend_key_size(), 'line'),
-        axis.text = element_text(size = axis_text_size()),
+        axis.text = element_text(size = axis_text_size(), color = "black"),
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size())
         ) +
@@ -832,9 +948,6 @@ server <- function(input, output, session) {
   # County on Leaflet Map
   output$map_county <- renderLeaflet({
     
-    latit <- 32
-    longit <- -86
-    
     # Extracting long and lat of selected county from sites
     site<-subset(sites, State.Name == selected_state() & County.Name == selected_county())
     
@@ -859,7 +972,66 @@ server <- function(input, output, session) {
                   highlightOptions = highlightOptions(color = "white", weight = 3,
                                                       bringToFront = TRUE)) %>%
       setView(lng = computed_lng, lat = computed_lat, zoom = 6) %>%
-      addMarkers(lng = computed_lng, lat = computed_lat, label = "Selected County")
+      addMarkers(lng = computed_lng, lat = computed_lat, label = paste(selected_state(),"-",selected_county()))
+  })
+  
+  # 3 Counties on LeafLet Map
+  output$map_counties <- renderLeaflet({
+    
+    # Extracting long and lat of selected county from sites
+    site1<-subset(sites, State.Name == selected_state1() & County.Name == selected_county1())
+    site2<-subset(sites, State.Name == selected_state2() & County.Name == selected_county2())
+    site3<-subset(sites, State.Name == selected_state3() & County.Name == selected_county3())
+    
+    
+    latit1 <- site1$Latitude
+    latit2 <- site2$Latitude
+    latit3 <- site3$Latitude
+    
+    latit1 <- latit1[latit1!=0] # Eliminating 0 values
+    latit1 <- latit1[!is.na(latit1)] # Eliminating NAs
+    latit2 <- latit2[latit2!=0] # Eliminating 0 values
+    latit2 <- latit2[!is.na(latit2)] # Eliminating NAs
+    latit3 <- latit3[latit3!=0] # Eliminating 0 values
+    latit3 <- latit3[!is.na(latit3)] # Eliminating NAs
+    
+    computed_lat1 <- mean(latit1)
+    computed_lat2 <- mean(latit2)
+    computed_lat3 <- mean(latit3)
+    
+    longit1 <- site1$Longitude
+    longit1 <- longit1[longit1!=0] # Eliminating 0 values
+    longit1 <- longit1[!is.na(longit1)] # Eliminating NAs
+    longit2 <- site2$Longitude
+    longit2 <- longit2[longit2!=0] # Eliminating 0 values
+    longit2 <- longit2[!is.na(longit2)] # Eliminating NAs
+    longit3 <- site3$Longitude
+    longit3 <- longit3[longit3!=0] # Eliminating 0 values
+    longit3 <- longit3[!is.na(longit3)] # Eliminating NAs
+    
+    computed_lng1 <- mean(longit1)
+    computed_lng2 <- mean(longit2)
+    computed_lng3 <- mean(longit3)
+    
+    mean_lng <- mean(computed_lng1,computed_lng2,computed_lng3)
+    mean_lat <- mean(computed_lat1,computed_lat2,computed_lat3)
+    
+    
+    # xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
+    
+    # nyc <- xy[xy$STATE == 36, ]
+    
+    leaflet(xy) %>%
+      addTiles() %>%
+      addPolygons(color = "#962121", weight = 0.8, smoothFactor = 0.2,
+                  opacity = 1.0, fillOpacity = 0.1,
+                  # fillColor = ~colorQuantile("YlOrRd"),
+                  highlightOptions = highlightOptions(color = "white", weight = 3,
+                                                      bringToFront = TRUE)) %>%
+      setView(lng = mean_lng, lat = mean_lat, zoom = 3) %>%
+      addMarkers(lng = computed_lng1, lat = computed_lat1, label = paste(selected_state1(),"-",selected_county1())) %>%
+      addMarkers(lng = computed_lng2, lat = computed_lat2, label = paste(selected_state2(),"-",selected_county2())) %>%
+      addMarkers(lng = computed_lng3, lat = computed_lat3, label = paste(selected_state3(),"-",selected_county3())) 
   })
   
   # About HTML
