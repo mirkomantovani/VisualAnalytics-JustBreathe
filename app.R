@@ -66,7 +66,7 @@ ui <- dashboardPage(
                    # -moz-transform: scale(1.5, 1.5); /* Moz-browsers */
                    #   zoom: 1.5; /* Other non-webkit browsers */
                    #   zoom: 150%; /* Webkit browsers */
-                   tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #60ECEC;color:white;}")),
+                   tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #428bca00;color:white;}")),
                    tags$style(
                      HTML("
 /*
@@ -171,12 +171,13 @@ if(dimension[0] >= 2000){  //SAGE
 nozoom = document.getElementById("nozoom");
 nozoom.style.zoom = "25%";
 
+
 map = document.getElementById("map_county");
 map.style.height = "2600px";
 
 boxzoom = document.getElementsByClassName("boxtozoom");
 for (var i = 0; i < boxzoom.length; i++) {
-  boxzoom[i].style.zoom = "450%";
+  boxzoom[i].style.zoom = "400%";
                      }
 
 //WHOLE CONTENT PANEL SIZE
@@ -190,13 +191,27 @@ for (var i = 0; i < titles.length; i++) {
   titles[i].style.fontSize = "110%";
 }
 
-//SLIDER TEXT SIZE
+// FIRST SLIDER TEXT SIZE
 slider = document.getElementsByClassName("irs-grid-text");
 for (var i = 0; i < slider.length; i++) {
   slider[i].style.fontSize = "200%";
 }
+
+// SECOND SLIDER
+nozoomslider = document.getElementById("nozoomslider");
+nozoomslider.style.zoom = "25%";
+
+//Range slider no numbers
+tags = nozoomslider.getElementsByClassName("irs-grid-text");
+for (var i = 0; i < tags.length; i++) {
+tags[i].style.fontSize = "80%";
+}
 document.getElementsByClassName("irs-single")[0].style.fontSize = "200%";
 document.getElementsByClassName("irs-min")[0].style.fontSize = "200%";
+document.getElementsByClassName("irs-from")[1].style.fontSize = "200%";
+document.getElementsByClassName("irs-from")[1].style.background = "#428bca00";
+document.getElementsByClassName("irs-to")[1].style.fontSize = "200%";
+document.getElementsByClassName("irs-to")[1].style.background = "#428bca00";
 
 labels = document.getElementsByClassName("control-label");
 labels[2].style.fontSize = "60px";
@@ -266,6 +281,7 @@ labels[2].style.fontSize = "60px";
                                           circle = TRUE, status = "danger", icon = icon("gear"), width = "300px",
                                           tooltip = tooltipOptions(title = "Click to open")
                                         ),
+                                        colourInput("backgroundColor", h3("Select color"), value = "#005669"),
                                     selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE, options = NULL),
                                     h3("State:"),
                                     h4(textOutput("sel_state")),
@@ -274,7 +290,9 @@ labels[2].style.fontSize = "60px";
                                     h3("Data:"),
                                     h6(textOutput("data_years")),
                                     h6(textOutput("data_days")),
-                                    colourInput("backgroundColor", h3("Select color"), value = "#005669")
+                                    div(id="nozoomslider",ticks = FALSE, sliderInput("range", sep = "", label = "Select Year range", min = 1980, 
+                                                max = 2018, value = c(1980, 2018))
+                                    )
                                     
                                     ),class = "boxtozoom")
                              )
@@ -446,10 +464,10 @@ server <- function(input, output, session) {
     paste(input$dimension[1], input$dimension[2], input$dimension[1]/input$dimension[2])
   })
   
-  m_palette <-  scale_fill_manual(name = "",
-                                  values = c('0 to 9' = '#08306b','10 to 19' = '#103a76', '20 to 29' = '#08519c',  '30 to 39' = '#2171b5',
-                                             '40 to 49'= '#4292c6', '50 to 59' = '#6baed6','60 to 69' = '#9ecae1', '70 to 79' = '#c6dbef',
-                                             '80+' = '#deebf7'))
+  # m_palette <-  scale_fill_manual(name = "",
+  #                                 values = c('0 to 9' = '#08306b','10 to 19' = '#103a76', '20 to 29' = '#08519c',  '30 to 39' = '#2171b5',
+  #                                            '40 to 49'= '#4292c6', '50 to 59' = '#6baed6','60 to 69' = '#9ecae1', '70 to 79' = '#c6dbef',
+  #                                            '80+' = '#deebf7'))
   
   # computing subset of data based on user selection of year, state, county
   current <- reactive({
@@ -890,7 +908,7 @@ server <- function(input, output, session) {
   
   # Time series of AQI statistics
   output$aqi_time <- renderPlot({
-    df<-subset(dataset, State == selected_state() & County == selected_county())
+    df<-subset(dataset, State == selected_state() & County == selected_county() & Year > input$range[1] & Year < input$range[2])
     ggplot(data = df, aes(x = Year)) +
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1),
@@ -916,7 +934,7 @@ server <- function(input, output, session) {
       geom_line(aes(y = Median.AQI, color = "Median"), size = line_size(), group = 2) +
       geom_point(aes(y = Median.AQI, color = "Median"), size = line_size()*3) +
       labs(x = "Year", y = "Air Quality Index") +
-      scale_x_continuous(breaks = round(seq(min(df$Year), max(df$Year), by = 1),1)) +
+      scale_x_continuous(breaks = round(seq(max(min(df$Year),input$range[1]), min(max(df$Year),input$range[2]), by = 1),1)) +
       # scale_color_manual(name = "Statistics",
       #                    values = c("Max" = "firebrick1", 
       #                               "90th Percentile" = "firebrick4",
