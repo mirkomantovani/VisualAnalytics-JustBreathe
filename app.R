@@ -35,6 +35,10 @@ states<-unique(dataset$State)
 t<-subset(dataset, State == 'Illinois')
 counties<-unique(t$County)
 
+pollutants <- c("CO","NO2","Ozone","SO2","PM2.5","PM10")
+statistics <- c("Median","Max","90th percentile")
+
+
 # All counties with state
 all_counties <- c()
 for(s in states){
@@ -52,7 +56,7 @@ ui <- dashboardPage(
   dashboardHeader(
     title = "Visual Analytics - Just Breathe", #    title = div(id = "title", "Visual Analytics - Just Breathe"),
     titleWidth = 400 #SAGE
-    ),
+  ),
   dashboardSidebar(disable = FALSE, collapsed = TRUE,
                    width = 400, #SAGE
                    
@@ -69,30 +73,30 @@ ui <- dashboardPage(
                    tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #428bca00;color:white;}")),
                    tags$style(
                      HTML("
-/*
-                        body {
-                        
-transform: scale(1.5);
-   transform-origin: 0 0;
-                        }
-
-
-#nozoom {
-transform: scale(0.666);
-
-}*/
-
-.content-wrapper, .right-side {
-    background: rgb(0, 114, 138);
-}
-
-.box {
-    background: rgb(188, 218, 224);
-    border-radius: 5px;
-    box-shadow: 0px 1px 20px 0px rgb(0, 24, 29);
-}
-
-
+                          /*
+                          body {
+                          
+                          transform: scale(1.5);
+                          transform-origin: 0 0;
+                          }
+                          
+                          
+                          #nozoom {
+                          transform: scale(0.666);
+                          
+                          }*/
+                          
+                          .content-wrapper, .right-side {
+                          background: rgb(0, 114, 138);
+                          }
+                          
+                          .box {
+                          background: rgb(188, 218, 224);
+                          border-radius: 5px;
+                          box-shadow: 0px 1px 20px 0px rgb(0, 24, 29);
+                          }
+                          
+                          
                           label{
                           color: rgb(255, 255, 255);
                           }
@@ -134,7 +138,7 @@ transform: scale(0.666);
                           background: rgb(0,170,183);
                           border-radius: 4px;
                           }
-
+                          
                           .recalculating {opacity: 1.0;}
                           "
                           
@@ -146,88 +150,88 @@ transform: scale(0.666);
                    tags$style("#County {background-color:blue;}"),
                    selectInput("County", "Select County", counties, selected = 'Adams',width = "200%"),
                    div(id="nozoom",sliderInput(inputId = "Year", 
-                               label = "Select Year", 
-                               value = 2018, min = 1980, max = 2018,width = "90%"))
+                                               label = "Select Year", 
+                                               value = 2018, min = 1980, max = 2018,width = "90%"))
                    ),
   dashboardBody(tags$head(
     tags$script(HTML('
-
-
-                
-                                var dimension = [0, 0];
-                  $(document).on("shiny:connected", function(e) {
-
-  //document.body.style.zoom = "100%";
-
-
-                  dimension[0] = window.innerWidth;
-                  dimension[1] = window.innerHeight;
-
-if(dimension[0] >= 2000){  //SAGE
-//document.write("<style>.rule1 { ... }</style>");
-  //document.body.style.fontSize = "500%";
-  document.body.style.zoom = "400%";
-
-nozoom = document.getElementById("nozoom");
-nozoom.style.zoom = "25%";
-
-
-map = document.getElementById("map_county");
-map.style.height = "2600px";
-
-boxzoom = document.getElementsByClassName("boxtozoom");
-for (var i = 0; i < boxzoom.length; i++) {
-  boxzoom[i].style.zoom = "400%";
+                     
+                     
+                     
+                     var dimension = [0, 0];
+                     $(document).on("shiny:connected", function(e) {
+                     
+                     //document.body.style.zoom = "100%";
+                     
+                     
+                     dimension[0] = window.innerWidth;
+                     dimension[1] = window.innerHeight;
+                     
+                     if(dimension[0] >= 2000){  //SAGE
+                     //document.write("<style>.rule1 { ... }</style>");
+                     //document.body.style.fontSize = "500%";
+                     document.body.style.zoom = "400%";
+                     
+                     nozoom = document.getElementById("nozoom");
+                     nozoom.style.zoom = "25%";
+                     
+                     
+                     map = document.getElementById("map_county");
+                     map.style.height = "2600px";
+                     
+                     boxzoom = document.getElementsByClassName("boxtozoom");
+                     for (var i = 0; i < boxzoom.length; i++) {
+                     boxzoom[i].style.zoom = "400%";
                      }
-
-//WHOLE CONTENT PANEL SIZE
-cont = document.getElementsByClassName("content");
-cont[0].style.zoom = "25%";
-cont[0].style.fontSize = "400%";
-
-//BOX TITLES SIZE
-titles = document.getElementsByClassName("box-title");
-for (var i = 0; i < titles.length; i++) {
-  titles[i].style.fontSize = "110%";
-}
-
-// FIRST SLIDER TEXT SIZE
-slider = document.getElementsByClassName("irs-grid-text");
-for (var i = 0; i < slider.length; i++) {
-  slider[i].style.fontSize = "200%";
-}
-
-// SECOND SLIDER
-nozoomslider = document.getElementById("nozoomslider");
-nozoomslider.style.zoom = "25%";
-
-//Range slider no numbers
-tags = nozoomslider.getElementsByClassName("irs-grid-text");
-for (var i = 0; i < tags.length; i++) {
-tags[i].style.fontSize = "80%";
-}
-document.getElementsByClassName("irs-single")[0].style.fontSize = "200%";
-document.getElementsByClassName("irs-min")[0].style.fontSize = "200%";
-document.getElementsByClassName("irs-from")[1].style.fontSize = "200%";
-document.getElementsByClassName("irs-from")[1].style.background = "#428bca00";
-document.getElementsByClassName("irs-to")[1].style.fontSize = "200%";
-document.getElementsByClassName("irs-to")[1].style.background = "#428bca00";
-
-labels = document.getElementsByClassName("control-label");
-labels[2].style.fontSize = "60px";
-
-
-}
-
-                  Shiny.onInputChange("dimension", dimension);
-                  });
-                  $(window).resize(function(e) {
-                  dimension[0] = window.innerWidth;
-                  dimension[1] = window.innerHeight;
-                  Shiny.onInputChange("dimension", dimension);
-                  });
-                  ')
-  )),
+                     
+                     //WHOLE CONTENT PANEL SIZE
+                     cont = document.getElementsByClassName("content");
+                     cont[0].style.zoom = "25%";
+                     cont[0].style.fontSize = "400%";
+                     
+                     //BOX TITLES SIZE
+                     titles = document.getElementsByClassName("box-title");
+                     for (var i = 0; i < titles.length; i++) {
+                     titles[i].style.fontSize = "110%";
+                     }
+                     
+                     // FIRST SLIDER TEXT SIZE
+                     slider = document.getElementsByClassName("irs-grid-text");
+                     for (var i = 0; i < slider.length; i++) {
+                     slider[i].style.fontSize = "200%";
+                     }
+                     
+                     // SECOND SLIDER
+                     nozoomslider = document.getElementById("nozoomslider");
+                     nozoomslider.style.zoom = "25%";
+                     
+                     //Range slider no numbers
+                     tags = nozoomslider.getElementsByClassName("irs-grid-text");
+                     for (var i = 0; i < tags.length; i++) {
+                     tags[i].style.fontSize = "80%";
+                     }
+                     document.getElementsByClassName("irs-single")[0].style.fontSize = "200%";
+                     document.getElementsByClassName("irs-min")[0].style.fontSize = "200%";
+                     document.getElementsByClassName("irs-from")[1].style.fontSize = "200%";
+                     document.getElementsByClassName("irs-from")[1].style.background = "#428bca00";
+                     document.getElementsByClassName("irs-to")[1].style.fontSize = "200%";
+                     document.getElementsByClassName("irs-to")[1].style.background = "#428bca00";
+                     
+                     labels = document.getElementsByClassName("control-label");
+                     labels[2].style.fontSize = "60px";
+                     
+                     
+                     }
+                     
+                     Shiny.onInputChange("dimension", dimension);
+                     });
+                     $(window).resize(function(e) {
+                     dimension[0] = window.innerWidth;
+                     dimension[1] = window.innerHeight;
+                     Shiny.onInputChange("dimension", dimension);
+                     });
+                     ')
+    )),
     shinyDashboardThemes(
       theme = "blue_gradient"
     ),
@@ -236,23 +240,23 @@ labels[2].style.fontSize = "60px";
               fluidRow(
                 column(6, 
                        box(title = "AQI levels", width = NULL,status = "primary",
-                              fluidRow(column(8,plotOutput("aqi_pie", height = "50vmin")),column(4,textOutput("missing_data"))),
-                              plotOutput("aqi_bar", height = "30vmin"),
-                              div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
-                )
+                           fluidRow(column(8,plotOutput("aqi_pie", height = "50vmin")),column(4,textOutput("missing_data"))),
+                           plotOutput("aqi_bar", height = "30vmin"),
+                           div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
+                       )
                 ),
                 column(6, 
                        box(title = "Pollutants",status = "primary", width = NULL, 
-                              tabsetPanel(
-                                tabPanel("Percentage of days",
-                                         fluidRow(column(4,plotOutput("co_pie", height = "38vmin")),column(4,plotOutput("no2_pie", height = "38vmin")),column(4,plotOutput("ozone_pie", height = "38vmin"))),
-                                         fluidRow(column(4,plotOutput("so2_pie", height = "38vmin")),column(4,plotOutput("pm25_pie", height = "38vmin")),column(4,plotOutput("pm10_pie", height = "38vmin")))
-                                ),
-                                tabPanel("Bar chart", plotOutput("pollutants_bar", height = "76vmin"))
-                              ),
-                              div(DT::dataTableOutput("pollutants_table"), style = "font-size:80%")
-                              
-                )
+                           tabsetPanel(
+                             tabPanel("Percentage of days",
+                                      fluidRow(column(4,plotOutput("co_pie", height = "38vmin")),column(4,plotOutput("no2_pie", height = "38vmin")),column(4,plotOutput("ozone_pie", height = "38vmin"))),
+                                      fluidRow(column(4,plotOutput("so2_pie", height = "38vmin")),column(4,plotOutput("pm25_pie", height = "38vmin")),column(4,plotOutput("pm10_pie", height = "38vmin")))
+                             ),
+                             tabPanel("Bar chart", plotOutput("pollutants_bar", height = "76vmin"))
+                           ),
+                           div(DT::dataTableOutput("pollutants_table"), style = "font-size:80%")
+                           
+                       )
                 )
               )
       ),
@@ -282,21 +286,21 @@ labels[2].style.fontSize = "60px";
                                           tooltip = tooltipOptions(title = "Click to open")
                                         ),
                                         colourInput("backgroundColor", h3("Select color"), value = "#005669"),
-                                    selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE, options = NULL),
-                                    h3("State:"),
-                                    h4(textOutput("sel_state")),
-                                    h3("County:"),
-                                    h4(textOutput("sel_county")),
-                                    h3("Data:"),
-                                    h6(textOutput("data_years")),
-                                    h6(textOutput("data_days")),
-                                    div(id="nozoomslider",ticks = FALSE, sliderInput("range", sep = "", label = "Select Year range", min = 1980, 
-                                                max = 2018, value = c(1980, 2018))
-                                    )
-                                    
-                                    ),class = "boxtozoom")
-                             )
-                       ),
+                                        selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE, options = NULL),
+                                        h3("State:"),
+                                        h4(textOutput("sel_state")),
+                                        h3("County:"),
+                                        h4(textOutput("sel_county")),
+                                        h3("Data:"),
+                                        h6(textOutput("data_years")),
+                                        h6(textOutput("data_days")),
+                                        div(id="nozoomslider",ticks = FALSE, sliderInput("range", sep = "", label = "Select Year range", min = 1980, 
+                                                                                         max = 2018, value = c(1980, 2018))
+                                        )
+                                        
+                             ),class = "boxtozoom")
+                )
+                ),
                 # 2 tabs, (line plots and table, map)
                 column(10,
                        tabsetPanel(
@@ -327,13 +331,21 @@ labels[2].style.fontSize = "60px";
                 # Input county with search
                 column(2,box(title = "Counties Selection",status = "success", width = NULL,
                              div(column(12, 
+                                        dropdownButton(
+                                          tags$h3("Select inputs to visualize"),
+                                          selectInput(inputId = "Statistic", h5("Select AQI statistic"), statistics, selected = 'Median',width = "200%"),
+                                          selectInput(inputId = "Pollutant", h5("Select pollutant"), pollutants, selected = 'CO',width = "200%"),
+                                          # selectInput(inputId = "State", "Select pollutant", pollutants, selected = 'CO',width = "200%"),
+                                          circle = TRUE, status = "danger", icon = icon("gear"), width = "300px",
+                                          tooltip = tooltipOptions(title = "Click to open")
+                                        ),
                                         fluidRow(selectizeInput("SelCounty1", label = h4("Search County 1"), sort(all_counties), selected = NULL, multiple = FALSE,options = NULL)),
                                         fluidRow(selectizeInput("SelCounty2", label = h4("Search County 2"), sort(all_counties), selected = NULL, multiple = FALSE,options = NULL)),
                                         fluidRow(selectizeInput("SelCounty3", label = h4("Search County 3"), sort(all_counties), selected = NULL, multiple = FALSE,options = NULL))
                              ),class = "boxtozoom")
                 ),
                 box(title = "Counties location",status = "success", width = NULL,
-                             leafletOutput("map_counties"))
+                    leafletOutput("map_counties"))
                 ),
                 column(10,
                        tabsetPanel(
@@ -341,9 +353,9 @@ labels[2].style.fontSize = "60px";
                                   plotOutput("aqi_time_comp", height = "85vmin")
                          ),
                          tabPanel("Pollutants Percentage Time Series",
-                                             # plotOutput("pollutants_time_comp", height = "80vmin")
-                                  h1("time ser poll")
-                                    ),
+                                  # plotOutput("pollutants_time_comp", height = "80vmin")
+                                  plotOutput("pollutants_time_comp", height = "85vmin")
+                         ),
                          
                          tabPanel("Pollutants Year details",
                                   h1("pollut. years details")
@@ -351,8 +363,8 @@ labels[2].style.fontSize = "60px";
                        )
                 )
                 
-              
-      )),
+                
+              )),
       
       # FOURTH MENU TAB
       tabItem("about",
@@ -362,10 +374,10 @@ labels[2].style.fontSize = "60px";
       
       # Finish tabs
     )
+    )
+  
   )
 
-)
-                   
 
 
 
@@ -393,7 +405,7 @@ server <- function(input, output, session) {
                       annotate_text_size = 4,
                       
                       select_input_width = '100%'
-                      )
+  )
   
   
   observeEvent(input$dimension, {
@@ -532,7 +544,7 @@ server <- function(input, output, session) {
     # if(length(current()$State)==1){
     c<-subset(dataset, County == input$County & State == isolate(input$State) & Year == input$Year)
     if(length(c$State) == 1){
-
+      
       df <- data.frame(
         
         group = c("Percentage of Good Days", "Percentage of Moderate Days", "Percentage of Unhealthy for Sensitive Groups Days", "Percentage of Very Unhealthy Days", "Percentage of Hazardous Days"),
@@ -638,7 +650,7 @@ server <- function(input, output, session) {
       
       df$group <- factor(df$group, levels = c("Days without CO","Days with CO"))
       
-
+      
       pie <- ggplot(df, aes(x="", y=value, fill=group)) + theme_minimal() +
         geom_bar(width = 1, stat = "identity") + coord_polar("y", start=0) + scale_fill_manual(values=c("#efefba", "#d6d600")) +
         theme(
@@ -899,12 +911,12 @@ server <- function(input, output, session) {
     if(round(d$Days.with.AQI/365*100) == 100){
       paste("The number of days with AQI data for the selected year is:",d$Days.with.AQI,",",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are accurate")
     } else{
-    paste("The number of days with AQI data for the selected year is:",d$Days.with.AQI,", only the",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are therefore estimates")
+      paste("The number of days with AQI data for the selected year is:",d$Days.with.AQI,", only the",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are therefore estimates")
     }
-    })
+  })
   
-
-
+  
+  
   
   # Time series of AQI statistics
   output$aqi_time <- renderPlot({
@@ -926,7 +938,7 @@ server <- function(input, output, session) {
         axis.text = element_text(size = axis_text_size(), color = input$textColor),
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size(), color = input$textColor)
-        ) +
+      ) +
       geom_line(aes(y = Max.AQI, color = "Max"), size = line_size(), group = 1) + 
       geom_point(aes(y = Max.AQI, color = "Max"), size = line_size()*3) +
       geom_line(aes(y = X90th.Percentile.AQI, color = "90th Percentile"), size = line_size(), group = 3) +
@@ -972,7 +984,7 @@ server <- function(input, output, session) {
         axis.text = element_text(size = axis_text_size(), color = input$textColor),
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size(), color = input$textColor)
-        ) +
+      ) +
       geom_line(aes(y = Days.CO, color = "CO"), size = line_size(), group = 1) + 
       geom_point(aes(y = Days.CO, color = "CO"), size = line_size()*3) +
       geom_line(aes(y = Days.NO2, color = "NO2"), size = line_size(), group = 2) +
@@ -1091,7 +1103,7 @@ server <- function(input, output, session) {
                   # fillColor = ~colorQuantile("YlOrRd"),
                   highlightOptions = highlightOptions(color = "white", weight = 3,
                                                       bringToFront = TRUE)) %>%
-      setView(lng = mean_lng, lat = mean_lat, zoom = zoom_level()-2) %>%
+      setView(lng = mean_lng, lat = mean_lat, zoom = zoom_level()-3) %>%
       addMarkers(lng = computed_lng1, lat = computed_lat1, label = paste(selected_state1(),"-",selected_county1())) %>%
       addMarkers(lng = computed_lng2, lat = computed_lat2, label = paste(selected_state2(),"-",selected_county2())) %>%
       addMarkers(lng = computed_lng3, lat = computed_lat3, label = paste(selected_state3(),"-",selected_county3())) 
@@ -1100,17 +1112,17 @@ server <- function(input, output, session) {
   # Time series of AQI statistics
   output$aqi_time_comp <- renderPlot({
     df1<-subset(dataset, State == selected_state1() & County == selected_county1())
-    df1 <- data.frame(df1$Median.AQI,df1$Year)
+    df1 <- data.frame(df1$Median.AQI,df1$Max.AQI,df1$X90th.Percentile.AQI,df1$Year)
     df2<-subset(dataset, State == selected_state2() & County == selected_county2())
-    df2 <- data.frame(df2$Median.AQI,df2$Year)
+    df2 <- data.frame(df2$Median.AQI,df2$Max.AQI,df2$X90th.Percentile.AQI,df2$Year)
     df3<-subset(dataset, State == selected_state3() & County == selected_county3())
-    df3 <- data.frame(df3$Median.AQI,df3$Year)
+    df3 <- data.frame(df3$Median.AQI,df3$Max.AQI,df3$X90th.Percentile.AQI,df3$Year)
     
     df <- merge(df1,df2,by.x = "df1.Year",by.y = "df2.Year")
     df <- merge(df,df3,by.x = "df1.Year",by.y = "df3.Year")
     
     
-    ggplot(data = df, aes(x = df1.Year)) +
+    plot <- ggplot(data = df, aes(x = df1.Year)) +
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1),
         axis.title.x = element_blank(),
@@ -1127,18 +1139,132 @@ server <- function(input, output, session) {
         axis.text = element_text(size = axis_text_size(), color = "white"),
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size(), color = "white")
-      ) + 
-      geom_line(aes(y = df1.Median.AQI, color = paste("Median AQI",selected_county1(),"-",selected_state1())), size = line_size(), group = 1) + 
-      geom_point(aes(y = df1.Median.AQI, color = paste("Median AQI",selected_county1(),"-",selected_state1())), size = line_size()*3) +
-      geom_line(aes(y = df2.Median.AQI, color = paste("Median AQI",selected_county2(),"-",selected_state2())), size = line_size(), group = 3) +
-      geom_point(aes(y = df2.Median.AQI, color = paste("Median AQI",selected_county2(),"-",selected_state2())), size = line_size()*3) +
-      geom_line(aes(y = df3.Median.AQI, color = paste("Median AQI",selected_county3(),"-",selected_state3())), size = line_size(), group = 2) +
-      geom_point(aes(y = df3.Median.AQI, color = paste("Median AQI",selected_county3(),"-",selected_state3())), size = line_size()*3) +
-      labs(x = "Year", y = "Air Quality Index") +
-      scale_x_continuous(breaks = round(seq(min(df$df1.Year), max(df$df1.Year), by = 1),1)) +
-
-      scale_color_discrete(name = "Selected counties",breaks=c(paste("Median AQI",selected_county1(),"-",selected_state1()),paste("Median AQI",selected_county2(),"-",selected_state2()),paste("Median AQI",selected_county3(),"-",selected_state3())))
+      ) + labs(x = "Year", y = "Air Quality Index")
+      
+      addLines <- function(plot, xx, yy, zz) {
+        xx <- enquo(xx)
+        yy <- enquo(yy)
+        zz <- enquo(zz)
+        
+        plot <- plot +
+          geom_line(aes(y = !!xx, color = paste(input$Statistic,"AQI",selected_county1(),"-",selected_state1())), size = line_size(), group = 1) + 
+          geom_point(aes(y = !!xx, color = paste(input$Statistic,"AQI",selected_county1(),"-",selected_state1())), size = line_size()*3) +
+          geom_line(aes(y = !!yy, color = paste(input$Statistic,"AQI",selected_county2(),"-",selected_state2())), size = line_size(), group = 3) +
+          geom_point(aes(y = !!yy, color = paste(input$Statistic,"AQI",selected_county2(),"-",selected_state2())), size = line_size()*3) +
+          geom_line(aes(y = !!zz, color = paste(input$Statistic,"AQI",selected_county3(),"-",selected_state3())), size = line_size(), group = 2) +
+          geom_point(aes(y = !!zz, color = paste(input$Statistic,"AQI",selected_county3(),"-",selected_state3())), size = line_size()*3) +
+          scale_color_discrete(name = "Selected counties",breaks=c(paste(input$Statistic,"AQI",selected_county1(),"-",selected_state1()),
+                                                                   paste(input$Statistic,"AQI",selected_county2(),"-",selected_state2()),
+                                                                   paste(input$Statistic,"AQI",selected_county3(),"-",selected_state3())))
+        return(plot)
+      }
+      
+      if(input$Statistic == "Median")
+        plot <- addLines(plot,df1.Median.AQI,df2.Median.AQI,df3.Median.AQI)
+      else if(input$Statistic == "Max")
+        plot <- addLines(plot,df1.Max.AQI,df2.Max.AQI,df3.Max.AQI)
+      else if(input$Statistic == "90th percentile")
+        plot <- addLines(plot,df1.X90th.Percentile.AQI,df2.X90th.Percentile.AQI,df3.X90th.Percentile.AQI)
+      
+      
+      plot
+      # geom_line(aes(y = df1.Median.AQI, color = paste("Median AQI",selected_county1(),"-",selected_state1())), size = line_size(), group = 1) + 
+      # geom_point(aes(y = df1.Median.AQI, color = paste("Median AQI",selected_county1(),"-",selected_state1())), size = line_size()*3) +
+      # geom_line(aes(y = df2.Median.AQI, color = paste("Median AQI",selected_county2(),"-",selected_state2())), size = line_size(), group = 3) +
+      # geom_point(aes(y = df2.Median.AQI, color = paste("Median AQI",selected_county2(),"-",selected_state2())), size = line_size()*3) +
+      # geom_line(aes(y = df3.Median.AQI, color = paste("Median AQI",selected_county3(),"-",selected_state3())), size = line_size(), group = 2) +
+      # geom_point(aes(y = df3.Median.AQI, color = paste("Median AQI",selected_county3(),"-",selected_state3())), size = line_size()*3) +
+      # labs(x = "Year", y = "Air Quality Index") +
+      # scale_x_continuous(breaks = round(seq(min(df$df1.Year), max(df$df1.Year), by = 1),1)) +
+      
   })
+  
+  # Time series of AQI statistics
+  output$pollutants_time_comp <- renderPlot({
+    
+    s_county1<-subset(dataset, State == selected_state1() & County == selected_county1())
+    s_county1[,14:19]<- s_county1[14:19]/s_county1$Days.with.AQI*100
+    s_county2<-subset(dataset, State == selected_state2() & County == selected_county2())
+    s_county2[,14:19]<- s_county2[14:19]/s_county2$Days.with.AQI*100
+    s_county3<-subset(dataset, State == selected_state3() & County == selected_county3())
+    s_county3[,14:19]<- s_county3[14:19]/s_county3$Days.with.AQI*100
+    
+    
+    # df1<-subset(dataset, State == selected_state1() & County == selected_county1())
+    # df1 <- data.frame(df1$Median.AQI,df1$Year)
+    # df2<-subset(dataset, State == selected_state2() & County == selected_county2())
+    # df2 <- data.frame(df2$Median.AQI,df2$Year)
+    # df3<-subset(dataset, State == selected_state3() & County == selected_county3())
+    # df3 <- data.frame(df3$Median.AQI,df3$Year)
+    
+    s_county1 <- merge(s_county1,s_county2,by = "Year")
+    s_county1 <- merge(s_county1,s_county3,by = "Year")
+
+    plot <- ggplot(data = s_county1, aes(x = Year)) +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.border = element_blank(),
+        plot.background = element_rect(color = NA, fill = "#005669"),
+        legend.background = element_rect(color = NA, fill = "#005669"),
+        legend.key = element_rect(color = NA, fill = "#005669"),
+        panel.background = element_rect(fill = "#005669", color  =  NA),
+        panel.grid.major = element_line(color = "white"),  
+        panel.grid.minor = element_line(color = "white"),
+        legend.text = element_text(size = legend_text_size(), color = "white"), 
+        legend.key.size = unit(legend_key_size(), 'line'),
+        axis.text = element_text(size = axis_text_size(), color = "white"),
+        axis.title = element_text(size = axis_title_size()),
+        legend.title = element_text(size = legend_title_size(), color = "white")
+      ) + labs(x = "Year", y = "Percentage of days as main Pollutant")
+    # scale_x_continuous(breaks = round(seq(min(s_county1$df1.Year), max(s_county1$df1.Year), by = 1),1)) +
+    
+    # Quosure to use input as a function to pass to aesthetics
+    addLines <- function(plot, xx, yy, zz) {
+      xx <- enquo(xx)
+      yy <- enquo(yy)
+      zz <- enquo(zz)
+      
+      plot <- plot +
+        geom_line(aes(y = !!xx, color = paste(input$Pollutant,selected_county1(),"-",selected_state1())), size = line_size(), group = 1) + 
+        geom_point(aes(y = !!xx, color = paste(input$Pollutant,selected_county1(),"-",selected_state1())), size = line_size()*3) +
+        geom_line(aes(y = !!yy, color = paste(input$Pollutant,selected_county2(),"-",selected_state2())), size = line_size(), group = 3) +
+        geom_point(aes(y = !!yy, color = paste(input$Pollutant,selected_county2(),"-",selected_state2())), size = line_size()*3) +
+        geom_line(aes(y = !!zz, color = paste(input$Pollutant,selected_county3(),"-",selected_state3())), size = line_size(), group = 2) +
+        geom_point(aes(y = !!zz, color = paste(input$Pollutant,selected_county3(),"-",selected_state3())), size = line_size()*3) +
+        scale_color_discrete(name = "Selected counties",breaks=c(paste(input$Pollutant,selected_county1(),"-",selected_state1()),
+                                                                 paste(input$Pollutant,selected_county2(),"-",selected_state2()),
+                                                                 paste(input$Pollutant,selected_county3(),"-",selected_state3())))
+      return(plot)
+    }
+    
+    if(input$Pollutant == "CO")
+      plot <- addLines(plot,Days.CO.x,Days.CO.y,Days.CO)
+    else if(input$Pollutant == "NO2")
+      plot <- addLines(plot,Days.NO2.x,Days.NO2.y,Days.NO2)
+    else if(input$Pollutant == "Ozone")
+      plot <- addLines(plot,Days.Ozone.x,Days.Ozone.y,Days.Ozone)
+    else if(input$Pollutant == "SO2")
+      plot <- addLines(plot,Days.SO2.x,Days.SO2.y,Days.SO2)
+    else if(input$Pollutant == "PM2.5")
+      plot <- addLines(plot,Days.PM2.5.x,Days.PM2.5.y,Days.PM2.5)
+    else if(input$Pollutant == "PM10")
+      plot <- addLines(plot,Days.PM10.x,Days.PM10.y,Days.PM10)
+    
+    # switch
+    # plot <- plot +
+    #   geom_line(aes(y = Days.CO.x, color = paste(input$Pollutant,selected_county1(),"-",selected_state1())), size = line_size(), group = 1) + 
+    #   geom_point(aes(y = Days.CO.x, color = paste(input$Pollutant,selected_county1(),"-",selected_state1())), size = line_size()*3) +
+    #   geom_line(aes(y = Days.CO.y, color = paste(input$Pollutant,selected_county2(),"-",selected_state2())), size = line_size(), group = 3) +
+    #   geom_point(aes(y = Days.CO.y, color = paste(input$Pollutant,selected_county2(),"-",selected_state2())), size = line_size()*3) +
+    #   geom_line(aes(y = Days.CO, color = paste(input$Pollutant,selected_county3(),"-",selected_state3())), size = line_size(), group = 2) +
+    #   geom_point(aes(y = Days.CO, color = paste(input$Pollutant,selected_county3(),"-",selected_state3())), size = line_size()*3) +
+    #   scale_color_discrete(name = "Selected counties",breaks=c(paste(input$Pollutant,selected_county1(),"-",selected_state1()),paste(input$Pollutant,selected_county2(),"-",selected_state2()),paste(input$Pollutant,selected_county3(),"-",selected_state3())))
+  
+    
+    plot
+    })
   
   
   # About HTML
@@ -1150,18 +1276,18 @@ server <- function(input, output, session) {
     <a href='https://github.com/mirkomantovani/VisualAnalytics-JustBreathe'>Github repository</a><br>"
     libraries <- "<b>Used R libraries: </b> <br><br> 
     <ul>
-      <li>shiny</li>
-      <li>shinydashboard</li>
-<li>ggplot2</li>
-<li>scales</li>
-<li>shinythemes</li>
-<li>dashboardthemes</li>
-<li>ggthemes</li>
-<li>shinyalert</li>
-<li>leaflet</li>
-<li>rgdal</li>
-<li>geojson</li>
-<li>geojsonio</li>
+    <li>shiny</li>
+    <li>shinydashboard</li>
+    <li>ggplot2</li>
+    <li>scales</li>
+    <li>shinythemes</li>
+    <li>dashboardthemes</li>
+    <li>ggthemes</li>
+    <li>shinyalert</li>
+    <li>leaflet</li>
+    <li>rgdal</li>
+    <li>geojson</li>
+    <li>geojsonio</li>
     </ul><br>"
     data <- "<b>Dataset Source:</b> <a href='https://aqs.epa.gov/aqsweb/airdata/download_files.html'>United States Environmental Protection Agency</a><br>
     <a href='http://eric.clst.org/tech/usgeojson/e'>United States Counties shape in GeoJSON</a>"
