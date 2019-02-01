@@ -357,8 +357,8 @@ ui <- dashboardPage(
                                   plotOutput("pollutants_time_comp", height = "85vmin")
                          ),
                          
-                         tabPanel("Pollutants Year details",
-                                  h1("pollut. years details")
+                         tabPanel("Days as main pollutant, specific year",
+                                  plotOutput("pollutants_bar_comp", height = "76vmin")
                          )
                        )
                 )
@@ -909,9 +909,9 @@ server <- function(input, output, session) {
   output$missing_data <- renderText({
     d <- current()
     if(round(d$Days.with.AQI/365*100) == 100){
-      paste("The number of days with AQI data for the selected year is:",d$Days.with.AQI,",",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are accurate")
+      paste("Selected County:",input$County,"-",input$State,", the number of days with AQI data for the year",input$Year,"is:",d$Days.with.AQI,",",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are accurate")
     } else{
-      paste("The number of days with AQI data for the selected year is:",d$Days.with.AQI,", only the",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are therefore estimates")
+      paste("Selected County:",input$County,"-",input$State,", the number of days with AQI data for the year",input$Year,"is:",d$Days.with.AQI,", only the",round(d$Days.with.AQI/365*100),"% of data is available. The percentages are therefore estimates")
     }
   })
   
@@ -1265,6 +1265,96 @@ server <- function(input, output, session) {
     
     plot
     })
+  
+  # bar chart of pollutants comparison
+  output$pollutants_bar_comp <- renderPlot({
+    # if(length(current()$State)==1){
+      
+      
+    # df<-subset(dataset, Year == input$Year &
+    #              ((State == selected_state1() & County == selected_county1()) |
+    #              (State == selected_state2() & County == selected_county2()) |
+    #              (State == selected_state3() & County == selected_county3()))
+    #            )
+    
+    df1<-subset(dataset, Year == input$Year & State == selected_state1() & County == selected_county1())
+    df2<-subset(dataset, Year == input$Year & State == selected_state2() & County == selected_county2())
+    df3<-subset(dataset, Year == input$Year & State == selected_state3() & County == selected_county3())
+    
+    
+      df1 <- data.frame(
+        
+        group = c('CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'),
+        value = c(df1$Days.CO, 
+                  df1$Days.NO2, 
+                  df1$Days.Ozone,
+                  df1$Days.SO2,
+                  df1$Days.PM2.5,
+                  df1$Days.PM10),
+        county = c(
+          paste(selected_county1(),"-",selected_state1())
+        )
+        
+      )
+      
+      df2 <- data.frame(
+        
+        group = c('CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'),
+        value = c(df2$Days.CO, 
+                  df2$Days.NO2, 
+                  df2$Days.Ozone,
+                  df2$Days.SO2,
+                  df2$Days.PM2.5,
+                  df2$Days.PM10),
+        county = c(
+          paste(selected_county2(),"-",selected_state2())
+        )
+        
+      )
+      
+      df3 <- data.frame(
+        
+        group = c('CO', 'NO2', 'Ozone', 'SO2','PM2.5','PM10'),
+        value = c(df3$Days.CO, 
+                  df3$Days.NO2, 
+                  df3$Days.Ozone,
+                  df3$Days.SO2,
+                  df3$Days.PM2.5,
+                  df3$Days.PM10),
+        county = c(
+          paste(selected_county3(),"-",selected_state3())
+        )
+        
+      )
+      
+      df <- rbind(df1, df2, df3)
+      
+      bar <-ggplot(data=df, aes(x=group, y=value, fill = county)) +
+        geom_bar(stat="identity", position=position_dodge()) + 
+        theme(
+          text = element_text(size=12)#,
+          # legend.position="none"
+        )+ 
+        # xlab("Detected Pollutant") + ylab("Days count") +
+        # scale_fill_manual(values=c("#C3B5DB", "#ABB6D4", "#83BDDF","#A2DFA8", "#98D5B3", "#93D8CD"))+
+        theme(
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          panel.border = element_blank(),
+          plot.background = element_rect(color = NA, fill = "#bcdae0"),
+          legend.background = element_rect(color = NA, fill = "#bcdae0"),
+          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
+          panel.grid.major = element_line(color = "black"),  
+          panel.grid.minor = element_line(color = "black"),
+          legend.text = element_text(size = legend_text_size()), 
+          legend.key.size = unit(legend_key_size(), 'line'),
+          axis.text = element_text(size = axis_text_size(), color = "black"),
+          axis.title = element_text(size = axis_title_size()),
+          legend.title = element_text(size = legend_title_size())
+        )
+      bar
+    # }
+  })
   
   
   # About HTML
