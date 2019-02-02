@@ -240,7 +240,10 @@ ui <- dashboardPage(
               fluidRow(
                 column(6, 
                        box(title = "AQI levels", width = NULL,status = "primary",
-                           fluidRow(column(8,plotOutput("aqi_pie", height = "50vmin")),column(4,textOutput("missing_data"))),
+                           fluidRow(column(8,
+                                           box(title = "Percentage of AQI level", width = NULL,status = "primary",div(plotOutput("aqi_pie", height = "42vmin")))),
+                                    column(4,
+                                           textOutput("missing_data"))),
                            plotOutput("aqi_bar", height = "30vmin"),
                            div(DT::dataTableOutput("aqi_table"), style = "font-size:80%")
                        )
@@ -248,7 +251,7 @@ ui <- dashboardPage(
                 column(6, 
                        box(title = "Pollutants",status = "primary", width = NULL, 
                            tabsetPanel(
-                             tabPanel("Percentage of days",
+                             tabPanel("Percentage of days as main Pollutant",
                                       fluidRow(column(4,plotOutput("co_pie", height = "38vmin")),column(4,plotOutput("no2_pie", height = "38vmin")),column(4,plotOutput("ozone_pie", height = "38vmin"))),
                                       fluidRow(column(4,plotOutput("so2_pie", height = "38vmin")),column(4,plotOutput("pm25_pie", height = "38vmin")),column(4,plotOutput("pm10_pie", height = "38vmin")))
                              ),
@@ -353,12 +356,11 @@ ui <- dashboardPage(
                                   plotOutput("aqi_time_comp", height = "85vmin")
                          ),
                          tabPanel("Pollutants Percentage Time Series",
-                                  # plotOutput("pollutants_time_comp", height = "80vmin")
                                   plotOutput("pollutants_time_comp", height = "85vmin")
                          ),
                          
-                         tabPanel("Days as main pollutant, specific year",
-                                  plotOutput("pollutants_bar_comp", height = "76vmin")
+                         tabPanel("Days as main pollutant in specific year",
+                                  plotOutput("pollutants_bar_comp", height = "85vmin")
                          )
                        )
                 )
@@ -412,8 +414,8 @@ server <- function(input, output, session) {
     if(input$dimension[1] >= 2000){
       v$axis_title_size <<- 40
       v$axis_text_size <<- 40
-      v$margin_y <<- 0
-      v$margin_x <<- 30
+      v$margin_y <<- 40
+      v$margin_x <<- 40
       v$legend_title_size <<- 40
       v$legend_text_size <<- 40
       v$legend_key_size <<- 8
@@ -432,7 +434,7 @@ server <- function(input, output, session) {
     } else {
       v$axis_title_size = 14 
       v$axis_text_size = 12
-      v$margin_y = 40
+      v$margin_y = 45
       v$margin_x = 0
       v$legend_text_size = 10
       v$legend_title_size = 10
@@ -565,7 +567,7 @@ server <- function(input, output, session) {
           legend.background = element_rect(color = NA, fill = "#bcdae0"),
           panel.background = element_rect(fill = "#bcdae0", color  =  NA),
           strip.background = element_rect(fill = "#bcdae0", color = "#bcdae0"),
-          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.margin=grid::unit(c(margin_y(),margin_x()+8.5,margin_y(),margin_x()+8.5), "mm"),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
           legend.text = element_text(size = legend_text_size()), 
@@ -610,7 +612,7 @@ server <- function(input, output, session) {
         )+ 
         xlab("AQI level") + ylab("Days count")+
         theme(
-          axis.title.x = element_blank(),
+          axis.title.x = element_text(color = "black"),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
           plot.background = element_rect(color = NA, fill = "#bcdae0"),
@@ -657,7 +659,7 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
-          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.margin=grid::unit(c(margin_y()+0.22,margin_x(),margin_y()+0.22,margin_x()), "mm"),
           plot.background = element_rect(color = NA, fill = "#bcdae0"),
           legend.background = element_rect(color = NA, fill = "#bcdae0"),
           panel.background = element_rect(fill = "#bcdae0", color  =  NA),
@@ -690,7 +692,7 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
-          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.margin=grid::unit(c(margin_y()+1.1,margin_x(),margin_y()+1.1,margin_x()), "mm"),
           plot.background = element_rect(color = NA, fill = "#bcdae0"),
           legend.background = element_rect(color = NA, fill = "#bcdae0"),
           panel.background = element_rect(fill = "#bcdae0", color  =  NA),
@@ -723,7 +725,7 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
-          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.margin=grid::unit(c(margin_y()+2.655,margin_x(),margin_y()+2.655,margin_x()), "mm"),
           plot.background = element_rect(color = NA, fill = "#bcdae0"),
           legend.background = element_rect(color = NA, fill = "#bcdae0"),
           panel.background = element_rect(fill = "#bcdae0", color  =  NA),
@@ -759,7 +761,7 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
-          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.margin=grid::unit(c(margin_y()+0.23,margin_x(),margin_y()+0.23,margin_x()), "mm"),
           plot.background = element_rect(color = NA, fill = "#bcdae0"),
           legend.background = element_rect(color = NA, fill = "#bcdae0"),
           panel.background = element_rect(fill = "#bcdae0", color  =  NA),
@@ -792,7 +794,7 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
-          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.margin=grid::unit(c(margin_y()+2.11,margin_x(),margin_y()+2.11,margin_x()), "mm"),
           plot.background = element_rect(color = NA, fill = "#bcdae0"),
           legend.background = element_rect(color = NA, fill = "#bcdae0"),
           panel.background = element_rect(fill = "#bcdae0", color  =  NA),
@@ -825,7 +827,7 @@ server <- function(input, output, session) {
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
           panel.border = element_blank(),
-          plot.margin=grid::unit(c(margin_y(),margin_x(),margin_y(),margin_x()), "mm"),
+          plot.margin=grid::unit(c(margin_y()+1.97,margin_x(),margin_y()+1.97,margin_x()), "mm"),
           plot.background = element_rect(color = NA, fill = "#bcdae0"),
           legend.background = element_rect(color = NA, fill = "#bcdae0"),
           panel.background = element_rect(fill = "#bcdae0", color  =  NA),
@@ -871,8 +873,8 @@ server <- function(input, output, session) {
         xlab("Detected Pollutant") + ylab("Days count") +
         scale_fill_manual(values=c("#C3B5DB", "#ABB6D4", "#83BDDF","#A2DFA8", "#98D5B3", "#93D8CD"))+
         theme(
-          axis.title.x = element_blank(),
-          axis.title.y = element_blank(),
+          axis.title.x = element_text(color = "black"),
+          axis.title.y = element_text(color = "black"),
           panel.border = element_blank(),
           plot.background = element_rect(color = NA, fill = "#bcdae0"),
           legend.background = element_rect(color = NA, fill = "#bcdae0"),
@@ -884,7 +886,7 @@ server <- function(input, output, session) {
           axis.text = element_text(size = axis_text_size(), color = "black"),
           axis.title = element_text(size = axis_title_size()),
           legend.title = element_text(size = legend_title_size())
-        )
+        ) # + labs(y="Number of days as main pollutant")
       bar
     }
   })
@@ -925,7 +927,7 @@ server <- function(input, output, session) {
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1),
         axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
+        axis.title.y = element_text(color = input$textColor),
         panel.border = element_blank(),
         plot.background = element_rect(color = NA, fill = input$backgroundColor),
         legend.background = element_rect(color = NA, fill = input$backgroundColor),
@@ -970,8 +972,8 @@ server <- function(input, output, session) {
     ggplot(data = s_county, aes(x = Year)) +
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y = element_text(color = "white"),
         axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
         panel.border = element_blank(),
         plot.background = element_rect(color = NA, fill = input$backgroundColor),
         legend.background = element_rect(color = NA, fill = input$backgroundColor),
@@ -984,7 +986,7 @@ server <- function(input, output, session) {
         axis.text = element_text(size = axis_text_size(), color = input$textColor),
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size(), color = input$textColor)
-      ) +
+      ) + labs(y = "Percentage of days as main Pollutant") +
       geom_line(aes(y = Days.CO, color = "CO"), size = line_size(), group = 1) + 
       geom_point(aes(y = Days.CO, color = "CO"), size = line_size()*3) +
       geom_line(aes(y = Days.NO2, color = "NO2"), size = line_size(), group = 2) +
@@ -1126,7 +1128,7 @@ server <- function(input, output, session) {
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1),
         axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
+        axis.title.y = element_text(color = input$textColor),
         panel.border = element_blank(),
         plot.background = element_rect(color = NA, fill = "#005669"),
         legend.background = element_rect(color = NA, fill = "#005669"),
@@ -1202,9 +1204,9 @@ server <- function(input, output, session) {
 
     plot <- ggplot(data = s_county1, aes(x = Year)) +
       theme(
-        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.x = element_text(angle = 45, hjust = 1, color = "white"),
+        axis.title.y = element_text(color = "white"),
         axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
         panel.border = element_blank(),
         plot.background = element_rect(color = NA, fill = "#005669"),
         legend.background = element_rect(color = NA, fill = "#005669"),
@@ -1217,7 +1219,7 @@ server <- function(input, output, session) {
         axis.text = element_text(size = axis_text_size(), color = "white"),
         axis.title = element_text(size = axis_title_size()),
         legend.title = element_text(size = legend_title_size(), color = "white")
-      ) + labs(x = "Year", y = "Percentage of days as main Pollutant")
+      ) + labs(y = "Percentage of days as main Pollutant")
     # scale_x_continuous(breaks = round(seq(min(s_county1$df1.Year), max(s_county1$df1.Year), by = 1),1)) +
     
     # Quosure to use input as a function to pass to aesthetics
@@ -1268,19 +1270,12 @@ server <- function(input, output, session) {
   
   # bar chart of pollutants comparison
   output$pollutants_bar_comp <- renderPlot({
-    # if(length(current()$State)==1){
-      
-      
-    # df<-subset(dataset, Year == input$Year &
-    #              ((State == selected_state1() & County == selected_county1()) |
-    #              (State == selected_state2() & County == selected_county2()) |
-    #              (State == selected_state3() & County == selected_county3()))
-    #            )
-    
+  
     df1<-subset(dataset, Year == input$Year & State == selected_state1() & County == selected_county1())
     df2<-subset(dataset, Year == input$Year & State == selected_state2() & County == selected_county2())
     df3<-subset(dataset, Year == input$Year & State == selected_state3() & County == selected_county3())
     
+    if(length(df1$Year)!=0 & length(df2$Year)!=0 & length(df3$Year)!=0){
     
       df1 <- data.frame(
         
@@ -1335,25 +1330,36 @@ server <- function(input, output, session) {
           text = element_text(size=12)#,
           # legend.position="none"
         )+ 
-        # xlab("Detected Pollutant") + ylab("Days count") +
-        # scale_fill_manual(values=c("#C3B5DB", "#ABB6D4", "#83BDDF","#A2DFA8", "#98D5B3", "#93D8CD"))+
+        ylab(paste("Days as main pollutant in",input$Year)) +
         theme(
+          axis.text.x = element_text(angle = 45, hjust = 1, color = "white"),
           axis.title.x = element_blank(),
-          axis.title.y = element_blank(),
+          axis.title.y = element_text(color = "white"),
+          
           panel.border = element_blank(),
-          plot.background = element_rect(color = NA, fill = "#bcdae0"),
-          legend.background = element_rect(color = NA, fill = "#bcdae0"),
-          panel.background = element_rect(fill = "#bcdae0", color  =  NA),
-          panel.grid.major = element_line(color = "black"),  
-          panel.grid.minor = element_line(color = "black"),
-          legend.text = element_text(size = legend_text_size()), 
+          plot.background = element_rect(color = NA, fill = "#005669"),
+          panel.background = element_rect(fill = "#005669", color  =  NA),
+          panel.grid.major = element_line(color = "white"),
+          panel.grid.minor = element_line(color = "white"),
+          legend.text = element_text(size = legend_text_size(), color = "white"),
           legend.key.size = unit(legend_key_size(), 'line'),
-          axis.text = element_text(size = axis_text_size(), color = "black"),
+          axis.text = element_text(size = axis_text_size(), color = "white"),
           axis.title = element_text(size = axis_title_size()),
-          legend.title = element_text(size = legend_title_size())
+          legend.title = element_text(size = legend_title_size(), color = "white"),
+          legend.key = element_rect(color = NA, fill = "#005669"),
+          legend.background = element_rect(color = NA, fill = "#005669")
         )
       bar
-    # }
+      
+  } # Signaling missing data
+  else {
+    if(length(df1$Year)==0)
+      shinyalert("Oops!", paste("No data for",selected_county1(),"-",selected_state1(),"in year",input$Year), type = "error")
+    else if(length(df2$Year)==0)
+      shinyalert("Oops!", paste("No data for",selected_county2(),"-",selected_state2(),"in year",input$Year), type = "error")
+    else if(length(df3$Year)==0)
+      shinyalert("Oops!", paste("No data for",selected_county3(),"-",selected_state3(),"in year",input$Year), type = "error")
+  }
   })
   
   
@@ -1378,8 +1384,11 @@ server <- function(input, output, session) {
     <li>rgdal</li>
     <li>geojson</li>
     <li>geojsonio</li>
+    <li>colourpicker</li>
+    <li>shinyWidgets</li>
+
     </ul><br>"
-    data <- "<b>Dataset Source:</b> <a href='https://aqs.epa.gov/aqsweb/airdata/download_files.html'>United States Environmental Protection Agency</a><br>
+    data <- "<b>Dataset Source:</b></br> <a href='https://aqs.epa.gov/aqsweb/airdata/download_files.html'>United States Environmental Protection Agency</a><br>
     <a href='http://eric.clst.org/tech/usgeojson/e'>United States Counties shape in GeoJSON</a>"
     HTML(paste(author, libraries, data))
   })
