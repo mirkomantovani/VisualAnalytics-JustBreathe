@@ -55,10 +55,10 @@ ui <- dashboardPage(
   #skin = "black",
   dashboardHeader(
     title = "Visual Analytics - Just Breathe", #    title = div(id = "title", "Visual Analytics - Just Breathe"),
-    titleWidth = 400 #SAGE
+    titleWidth = 300 #SAGE
   ),
   dashboardSidebar(disable = FALSE, collapsed = TRUE,
-                   width = 400, #SAGE
+                   width = 300, #SAGE
                    
                    sidebarMenu(
                      useShinyalert(),
@@ -170,24 +170,26 @@ ui <- dashboardPage(
                      if(dimension[0] >= 2000){  //SAGE
                      //document.write("<style>.rule1 { ... }</style>");
                      //document.body.style.fontSize = "500%";
-                     document.body.style.zoom = "400%";
+                     document.body.style.zoom = "250%";  //it was 400 so the 25% should become 40%
                      
                      nozoom = document.getElementById("nozoom");
-                     nozoom.style.zoom = "25%";
+                     nozoom.style.zoom = "40%";
                      
                      
                      map = document.getElementById("map_county");
+                     //map.style.zoom = "200%"; //messes with the height and hover over markers
                      map.style.height = "2600px";
+                      
                      
                      boxzoom = document.getElementsByClassName("boxtozoom");
                      for (var i = 0; i < boxzoom.length; i++) {
-                     boxzoom[i].style.zoom = "400%";
+                     boxzoom[i].style.zoom = "250%";
                      }
                      
                      //WHOLE CONTENT PANEL SIZE
                      cont = document.getElementsByClassName("content");
-                     cont[0].style.zoom = "25%";
-                     cont[0].style.fontSize = "400%";
+                     cont[0].style.zoom = "40%";
+                     cont[0].style.fontSize = "250%";
                      
                      //BOX TITLES SIZE
                      titles = document.getElementsByClassName("box-title");
@@ -203,7 +205,7 @@ ui <- dashboardPage(
                      
                      // SECOND SLIDER
                      nozoomslider = document.getElementById("nozoomslider");
-                     nozoomslider.style.zoom = "25%";
+                     nozoomslider.style.zoom = "40%";
                      
                      //Range slider no numbers
                      tags = nozoomslider.getElementsByClassName("irs-grid-text");
@@ -222,6 +224,11 @@ ui <- dashboardPage(
                      
                      
                      }
+                      else {
+                    map = document.getElementById("map_county");
+                     map.style.height = "800px";
+
+                      }
                      
                      Shiny.onInputChange("dimension", dimension);
                      });
@@ -268,17 +275,17 @@ ui <- dashboardPage(
       tabItem("time",
               fluidRow(
                 # Input county with search
-                column(2,box(title = "County Selection",status = "success", width = NULL,
+                column(2,box(title = "County Selection and customization",status = "success", width = NULL,
                              div(column(12, 
                                         
                                         dropdownButton(
                                           tags$h3("Other colors"),
-                                          checkboxGroupButtons(
-                                            inputId = "textColor", label = h5("Text and Grid color"), 
-                                            choices = c("white", "black"), 
-                                            justified = TRUE, status = "primary", selected = "white",
-                                            checkIcon = list(yes = icon("ok-sign", lib = "glyphicon"), no = icon("remove-sign", lib = "glyphicon"))
-                                          ),
+                                          # checkboxGroupButtons(
+                                          #   inputId = "textColor", label = h5("Text and Grid color"), 
+                                          #   choices = c("white", "black"), 
+                                          #   justified = TRUE, status = "primary", selected = "white",
+                                          #   checkIcon = list(yes = icon("ok-sign", lib = "glyphicon"), no = icon("remove-sign", lib = "glyphicon"))
+                                          # ),  # moved in main input panel
                                           colourInput("colorCO", h5("Select color CO"), value = "#c6c60f"),
                                           colourInput("colorNO2", h5("Select color NO2"), value = "#13c649"),
                                           colourInput("colorOZONE", h5("Select color Ozone"), value = "#0fa2af"),
@@ -289,6 +296,12 @@ ui <- dashboardPage(
                                           tooltip = tooltipOptions(title = "Click to open")
                                         ),
                                         colourInput("backgroundColor", h3("Select color"), value = "#005669"),
+                                        checkboxGroupButtons(
+                                          inputId = "textColor", label = h5("Text and Grid color"), # moved in main input panel 
+                                          choices = c("white", "black"), 
+                                          justified = TRUE, status = "primary", selected = "white",
+                                          checkIcon = list(yes = icon("ok-sign", lib = "glyphicon"), no = icon("remove-sign", lib = "glyphicon"))
+                                        ),
                                         selectizeInput("CountySearch", label = h4("Search County"), sort(all_counties), selected = NULL, multiple = FALSE, options = NULL),
                                         h3("State:"),
                                         h4(textOutput("sel_state")),
@@ -972,7 +985,7 @@ server <- function(input, output, session) {
     ggplot(data = s_county, aes(x = Year)) +
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.title.y = element_text(color = "white"),
+        axis.title.y = element_text(color = input$textColor),
         axis.title.x = element_blank(),
         panel.border = element_blank(),
         plot.background = element_rect(color = NA, fill = input$backgroundColor),
@@ -1000,7 +1013,7 @@ server <- function(input, output, session) {
       geom_line(aes(y = Days.PM10, color = "PM10"), size = line_size(), group = 6) +
       geom_point(aes(y = Days.PM10, color = "PM10"), size = line_size()*3) +
       labs(x = "Year", y = "Percentage of Pollutant") +
-      scale_x_continuous(breaks = round(seq(min(s_county$Year), max(s_county$Year), by = 1),1)) +
+      scale_x_continuous(breaks = round(seq(max(min(s_county$Year),input$range[1]), min(max(s_county$Year),input$range[2]), by = 1),1)) +
       scale_y_continuous(breaks = round(seq(min(s_county[14:19]), max(s_county[14:19]), by = 10),1)) +
       scale_color_manual(name = "Statistics",
                          values = c("CO" = input$colorCO,
@@ -1049,7 +1062,10 @@ server <- function(input, output, session) {
                   highlightOptions = highlightOptions(color = "white", weight = 3,
                                                       bringToFront = TRUE)) %>%
       setView(lng = computed_lng, lat = computed_lat, zoom = zoom_level()) %>%
-      addMarkers(lng = computed_lng, lat = computed_lat, label = paste(selected_state(),"-",selected_county()))
+      addMarkers(lng = computed_lng, lat = computed_lat, 
+                 label = paste(selected_state(),"-",selected_county()),
+                 labelOptions = labelOptions(textsize = "40px")
+                 )
   })
   
   # 3 Counties on LeafLet Map
@@ -1106,9 +1122,14 @@ server <- function(input, output, session) {
                   highlightOptions = highlightOptions(color = "white", weight = 3,
                                                       bringToFront = TRUE)) %>%
       setView(lng = mean_lng, lat = mean_lat, zoom = zoom_level()-3) %>%
-      addMarkers(lng = computed_lng1, lat = computed_lat1, label = paste(selected_state1(),"-",selected_county1())) %>%
-      addMarkers(lng = computed_lng2, lat = computed_lat2, label = paste(selected_state2(),"-",selected_county2())) %>%
-      addMarkers(lng = computed_lng3, lat = computed_lat3, label = paste(selected_state3(),"-",selected_county3())) 
+      addMarkers(lng = computed_lng1, lat = computed_lat1, label = paste(selected_state1(),"-",selected_county1()),
+                 labelOptions = labelOptions(textsize = "40px")
+      ) %>%
+      addMarkers(lng = computed_lng2, lat = computed_lat2, label = paste(selected_state2(),"-",selected_county2()),
+                 labelOptions = labelOptions(textsize = "40px")
+                 ) %>%
+      addMarkers(lng = computed_lng3, lat = computed_lat3, label = paste(selected_state3(),"-",selected_county3()),
+                 labelOptions = labelOptions(textsize = "40px")) 
   })
   
   # Time series of AQI statistics
