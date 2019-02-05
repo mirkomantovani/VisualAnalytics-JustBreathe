@@ -179,6 +179,12 @@ ui <- dashboardPage(
                      map = document.getElementById("map_county");
                      //map.style.zoom = "200%"; //messes with the height and hover over markers
                      map.style.height = "2600px";
+
+                     // LEAFLET MAP TEXT size
+                     leafletcont = document.getElementsByClassName("leaflet-container");
+                     for (var i = 0; i < leafletcont.length; i++) {
+                     leafletcont[i].style.fontSize = "60px";
+                     }
                       
                      
                      boxzoom = document.getElementsByClassName("boxtozoom");
@@ -1064,7 +1070,7 @@ server <- function(input, output, session) {
       setView(lng = computed_lng, lat = computed_lat, zoom = zoom_level()) %>%
       addMarkers(lng = computed_lng, lat = computed_lat, 
                  label = paste(selected_state(),"-",selected_county()),
-                 labelOptions = labelOptions(textsize = "40px")
+                 labelOptions = labelOptions(textsize = div())
                  )
   })
   
