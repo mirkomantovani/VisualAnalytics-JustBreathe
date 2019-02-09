@@ -181,10 +181,10 @@ ui <- dashboardPage(
                      map.style.height = "2600px";
 
                      // LEAFLET MAP TEXT size
-                     leafletcont = document.getElementsByClassName("leaflet-container");
-                     for (var i = 0; i < leafletcont.length; i++) {
-                     leafletcont[i].style.fontSize = "60px";
-                     }
+                    // leafletcont = document.getElementsByClassName("leaflet-container");
+                     //for (var i = 0; i < leafletcont.length; i++) {
+                     //leafletcont[i].style.fontSize = "60px";
+                     //}    not working because the javascript is executed first in this case
                       
                      
                      boxzoom = document.getElementsByClassName("boxtozoom");
@@ -424,7 +424,7 @@ server <- function(input, output, session) {
                       line_size = 1,
                       tbl_pagelength = 20,
                       annotate_text_size = 4,
-                      
+                      marker_text_size = '12px',
                       select_input_width = '100%'
   )
   
@@ -449,6 +449,7 @@ server <- function(input, output, session) {
       v$tbl_pagelength <<- 20
       v$annotate_text_size <<- 8
       
+      v$marker_text_size <<- '60px'
       v$select_input_width <<- '200%'
     } else {
       v$axis_title_size = 14 
@@ -469,7 +470,8 @@ server <- function(input, output, session) {
       v$tbl_pagelength = 20
       v$annotate_text_size = 4
       
-      select_input_width = '100%'
+      v$marker_text_size = '12px'
+      v$select_input_width = '100%'
     }
   })
   
@@ -491,6 +493,7 @@ server <- function(input, output, session) {
   tbl_pagelength <- reactive({v$tbl_pagelength})
   annotate_text_size <- reactive({v$annotate_text_size})
   
+  marker_text_size <- reactive({v$marker_text_size})
   select_input_width <- reactive({v$select_input_width})
   
   output$dimension_display <- renderText({
@@ -1070,7 +1073,7 @@ server <- function(input, output, session) {
       setView(lng = computed_lng, lat = computed_lat, zoom = zoom_level()) %>%
       addMarkers(lng = computed_lng, lat = computed_lat, 
                  label = paste(selected_state(),"-",selected_county()),
-                 labelOptions = labelOptions(textsize = div())
+                 labelOptions = labelOptions(textsize = marker_text_size())
                  )
   })
   
@@ -1127,15 +1130,15 @@ server <- function(input, output, session) {
                   # fillColor = ~colorQuantile("YlOrRd"),
                   highlightOptions = highlightOptions(color = "white", weight = 3,
                                                       bringToFront = TRUE)) %>%
-      setView(lng = mean_lng, lat = mean_lat, zoom = zoom_level()-3) %>%
+      setView(lng = -87.72265, lat = 41.8518, zoom = zoom_level()-6) %>%
       addMarkers(lng = computed_lng1, lat = computed_lat1, label = paste(selected_state1(),"-",selected_county1()),
-                 labelOptions = labelOptions(textsize = "40px")
+                 labelOptions = labelOptions(textsize = marker_text_size())
       ) %>%
       addMarkers(lng = computed_lng2, lat = computed_lat2, label = paste(selected_state2(),"-",selected_county2()),
-                 labelOptions = labelOptions(textsize = "40px")
+                 labelOptions = labelOptions(textsize = marker_text_size())
                  ) %>%
       addMarkers(lng = computed_lng3, lat = computed_lat3, label = paste(selected_state3(),"-",selected_county3()),
-                 labelOptions = labelOptions(textsize = "40px")) 
+                 labelOptions = labelOptions(textsize = marker_text_size())) 
   })
   
   # Time series of AQI statistics
