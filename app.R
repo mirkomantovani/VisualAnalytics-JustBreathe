@@ -22,8 +22,10 @@ temp = list.files(pattern="*.csv")
 datasets = lapply(temp, read.csv)
 dataset <- do.call(rbind, datasets)
 
+# needed for counties coordinates
 sites <- read.table(file = "sites/aqs_sites.csv", sep=",",header = TRUE)
 
+# geojson file for counties shape
 xy <- geojsonio::geojson_read("gz_2010_us_050_00_20m.json", what = "sp")
 
 
@@ -52,14 +54,12 @@ for(s in states){
 ############################################### UI ################################################
 
 ui <- dashboardPage(
-  #skin = "black",
   dashboardHeader(
-    title = "Visual Analytics - Just Breathe", #    title = div(id = "title", "Visual Analytics - Just Breathe"),
-    titleWidth = 300 #SAGE
+    title = "Visual Analytics - Just Breathe",
+    titleWidth = 300 
   ),
   dashboardSidebar(disable = FALSE, collapsed = TRUE,
-                   width = 300, #SAGE
-                   
+                   width = 300, 
                    sidebarMenu(
                      useShinyalert(),
                      menuItem("Year details for County", tabName = "pie"),
@@ -67,24 +67,13 @@ ui <- dashboardPage(
                      menuItem("Compare Counties", tabName = "compare"),
                      menuItem("About", tabName = "about")
                    ),
-                   # -moz-transform: scale(1.5, 1.5); /* Moz-browsers */
-                   #   zoom: 1.5; /* Other non-webkit browsers */
-                   #   zoom: 150%; /* Webkit browsers */
-                   tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {background: #428bca00;color:white;}")),
+                   # custom CSS 
                    tags$style(
                      HTML("
-                          /*
-                          body {
-                          
-                          transform: scale(1.5);
-                          transform-origin: 0 0;
-                          }
-                          
-                          
-                          #nozoom {
-                          transform: scale(0.666);
-                          
-                          }*/
+
+                .js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar, .irs-from .irs-to {
+                        background: #428bca00;color:white;
+                        }
                           
                           .content-wrapper, .right-side {
                           background: rgb(0, 114, 138);
@@ -144,8 +133,6 @@ ui <- dashboardPage(
                           
                      )
                    ),
-                   #selectInput("Year", "Select Year", years, selected = 2018),
-                   
                    selectInput(inputId = "State", "Select State", states, selected = 'Illinois',width = "200%"),
                    tags$style("#County {background-color:blue;}"),
                    selectInput("County", "Select County", counties, selected = 'Adams',width = "200%"),
@@ -154,10 +141,8 @@ ui <- dashboardPage(
                                                value = 2018, min = 1980, max = 2018,width = "90%"))
                    ),
   dashboardBody(tags$head(
+    # JavaScript to adjust sizes for SAGE screen
     tags$script(HTML('
-                     
-                     
-                     
                      var dimension = [0, 0];
                      $(document).on("shiny:connected", function(e) {
                      
@@ -246,9 +231,12 @@ ui <- dashboardPage(
                      ')
     )),
     shinyDashboardThemes(
+      # Blue theme mainly for sidebar
       theme = "blue_gradient"
     ),
+    # content of each main tab (selectable from sidebar)
     tabItems(
+      # FIRST MENU TAB
       tabItem("pie",
               fluidRow(
                 column(6, 
@@ -286,12 +274,6 @@ ui <- dashboardPage(
                                         
                                         dropdownButton(
                                           tags$h3("Other colors"),
-                                          # checkboxGroupButtons(
-                                          #   inputId = "textColor", label = h5("Text and Grid color"), 
-                                          #   choices = c("white", "black"), 
-                                          #   justified = TRUE, status = "primary", selected = "white",
-                                          #   checkIcon = list(yes = icon("ok-sign", lib = "glyphicon"), no = icon("remove-sign", lib = "glyphicon"))
-                                          # ),  # moved in main input panel
                                           colourInput("colorCO", h5("Select color CO"), value = "#c6c60f"),
                                           colourInput("colorNO2", h5("Select color NO2"), value = "#13c649"),
                                           colourInput("colorOZONE", h5("Select color Ozone"), value = "#0fa2af"),
@@ -407,6 +389,7 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
   
+  # customizing values for responsitivity in normal display and SAGE display
   v <- reactiveValues(axis_title_size = 14, 
                       axis_text_size = 12,
                       margin_y = 30,
@@ -428,7 +411,6 @@ server <- function(input, output, session) {
                       select_input_width = '100%'
   )
   
-  
   observeEvent(input$dimension, {
     if(input$dimension[1] >= 2000){
       v$axis_title_size <<- 40
@@ -448,7 +430,6 @@ server <- function(input, output, session) {
       v$line_size <<- 5
       v$tbl_pagelength <<- 20
       v$annotate_text_size <<- 8
-      
       v$marker_text_size <<- '60px'
       v$select_input_width <<- '200%'
     } else {
@@ -469,7 +450,6 @@ server <- function(input, output, session) {
       v$line_size = 1
       v$tbl_pagelength = 20
       v$annotate_text_size = 4
-      
       v$marker_text_size = '12px'
       v$select_input_width = '100%'
     }
@@ -500,11 +480,7 @@ server <- function(input, output, session) {
     paste(input$dimension[1], input$dimension[2], input$dimension[1]/input$dimension[2])
   })
   
-  # m_palette <-  scale_fill_manual(name = "",
-  #                                 values = c('0 to 9' = '#08306b','10 to 19' = '#103a76', '20 to 29' = '#08519c',  '30 to 39' = '#2171b5',
-  #                                            '40 to 49'= '#4292c6', '50 to 59' = '#6baed6','60 to 69' = '#9ecae1', '70 to 79' = '#c6dbef',
-  #                                            '80+' = '#deebf7'))
-  
+
   # computing subset of data based on user selection of year, state, county
   current <- reactive({
     # print("reactive")
@@ -513,7 +489,6 @@ server <- function(input, output, session) {
   })
   
   observeEvent(priority = 10,input$State,{
-    # print("observeEvent")
     selected_state_data <- subset(dataset, State == input$State)
     counties_in_state <- unique(selected_state_data$County)
     
@@ -523,9 +498,7 @@ server <- function(input, output, session) {
   })
   
   selected_state <- reactive({
-    # if(grepl(input$CountySearch,"-")){
     strsplit(input$CountySearch," - ")[[1]][2]
-    # }
   })
   
   selected_county <- reactive({
@@ -534,7 +507,6 @@ server <- function(input, output, session) {
   
   selected_state1 <- reactive({
     strsplit(input$SelCounty1," - ")[[1]][2]
-    # }
   })
   
   selected_county1 <- reactive({
@@ -559,13 +531,8 @@ server <- function(input, output, session) {
     strsplit(input$SelCounty3," - ")[[1]][1]
   })
   
-  diocane<- reactive({data.frame(current()$Good.Days,current()$Moderate.Days)})
-  
   # pie chart of aqi
   output$aqi_pie <- renderPlot({
-    # print(input$County)
-    # print("render Plot 1")
-    # if(length(current()$State)==1){
     c<-subset(dataset, County == input$County & State == isolate(input$State) & Year == input$Year)
     if(length(c$State) == 1){
       
@@ -603,7 +570,6 @@ server <- function(input, output, session) {
     }
     # Signaling missing data
     else {
-      # print("error")
       shinyalert("Oops!", "No data for this County in this Year", type = "error")
     }
   })
@@ -623,8 +589,6 @@ server <- function(input, output, session) {
       
       df$group <- factor(df$group, levels = c("Good", "Moderate", "Unhealthy for Sensitive Groups", "Very Unhealthy", "Hazardous"))
       
-      
-      # bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + geom_bar(stat="identity") + scale_fill_brewer(palette="Blues") 
       
       bar <-ggplot(data=df, aes(x=group, y=value, fill = group)) + scale_fill_brewer(palette="Greys") +
         geom_bar(stat="identity") + coord_flip() + 
@@ -659,10 +623,6 @@ server <- function(input, output, session) {
                                           options = list(searching = FALSE,paging = FALSE,
                                                          dom = 't'
                                           ))
-  # co_pie", height = "25vh")),column(6,plotOutput("no2_pie", height = "25vh"))),
-  #                   fluidRow(column(6,plotOutput("ozone_pie", height = "25vh")),column(6,plotOutput("so2_pie", height = "25vh"))),
-  # fluidRow(column(6,plotOutput("pm25_pie", height = "25vh")),column(6,plotOutput("pm10_pie"
-  
   # pie chart of CO
   output$co_pie <- renderPlot({
     if(length(current()$State)==1){
@@ -761,8 +721,6 @@ server <- function(input, output, session) {
       pie
     }
   })
-  
-  
   
   # pie chart of SO2
   output$so2_pie <- renderPlot({
@@ -1200,14 +1158,6 @@ server <- function(input, output, session) {
       
       
       plot
-      # geom_line(aes(y = df1.Median.AQI, color = paste("Median AQI",selected_county1(),"-",selected_state1())), size = line_size(), group = 1) + 
-      # geom_point(aes(y = df1.Median.AQI, color = paste("Median AQI",selected_county1(),"-",selected_state1())), size = line_size()*3) +
-      # geom_line(aes(y = df2.Median.AQI, color = paste("Median AQI",selected_county2(),"-",selected_state2())), size = line_size(), group = 3) +
-      # geom_point(aes(y = df2.Median.AQI, color = paste("Median AQI",selected_county2(),"-",selected_state2())), size = line_size()*3) +
-      # geom_line(aes(y = df3.Median.AQI, color = paste("Median AQI",selected_county3(),"-",selected_state3())), size = line_size(), group = 2) +
-      # geom_point(aes(y = df3.Median.AQI, color = paste("Median AQI",selected_county3(),"-",selected_state3())), size = line_size()*3) +
-      # labs(x = "Year", y = "Air Quality Index") +
-      # scale_x_continuous(breaks = round(seq(min(df$df1.Year), max(df$df1.Year), by = 1),1)) +
       
   })
   
@@ -1221,13 +1171,6 @@ server <- function(input, output, session) {
     s_county3<-subset(dataset, State == selected_state3() & County == selected_county3())
     s_county3[,14:19]<- s_county3[14:19]/s_county3$Days.with.AQI*100
     
-    
-    # df1<-subset(dataset, State == selected_state1() & County == selected_county1())
-    # df1 <- data.frame(df1$Median.AQI,df1$Year)
-    # df2<-subset(dataset, State == selected_state2() & County == selected_county2())
-    # df2 <- data.frame(df2$Median.AQI,df2$Year)
-    # df3<-subset(dataset, State == selected_state3() & County == selected_county3())
-    # df3 <- data.frame(df3$Median.AQI,df3$Year)
     
     s_county1 <- merge(s_county1,s_county2,by = "Year")
     s_county1 <- merge(s_county1,s_county3,by = "Year")
@@ -1283,17 +1226,6 @@ server <- function(input, output, session) {
       plot <- addLines(plot,Days.PM2.5.x,Days.PM2.5.y,Days.PM2.5)
     else if(input$Pollutant == "PM10")
       plot <- addLines(plot,Days.PM10.x,Days.PM10.y,Days.PM10)
-    
-    # switch
-    # plot <- plot +
-    #   geom_line(aes(y = Days.CO.x, color = paste(input$Pollutant,selected_county1(),"-",selected_state1())), size = line_size(), group = 1) + 
-    #   geom_point(aes(y = Days.CO.x, color = paste(input$Pollutant,selected_county1(),"-",selected_state1())), size = line_size()*3) +
-    #   geom_line(aes(y = Days.CO.y, color = paste(input$Pollutant,selected_county2(),"-",selected_state2())), size = line_size(), group = 3) +
-    #   geom_point(aes(y = Days.CO.y, color = paste(input$Pollutant,selected_county2(),"-",selected_state2())), size = line_size()*3) +
-    #   geom_line(aes(y = Days.CO, color = paste(input$Pollutant,selected_county3(),"-",selected_state3())), size = line_size(), group = 2) +
-    #   geom_point(aes(y = Days.CO, color = paste(input$Pollutant,selected_county3(),"-",selected_state3())), size = line_size()*3) +
-    #   scale_color_discrete(name = "Selected counties",breaks=c(paste(input$Pollutant,selected_county1(),"-",selected_state1()),paste(input$Pollutant,selected_county2(),"-",selected_state2()),paste(input$Pollutant,selected_county3(),"-",selected_state3())))
-  
     
     plot
     })
@@ -1357,9 +1289,8 @@ server <- function(input, output, session) {
       bar <-ggplot(data=df, aes(x=group, y=value, fill = county)) +
         geom_bar(stat="identity", position=position_dodge()) + 
         theme(
-          text = element_text(size=12)#,
-          # legend.position="none"
-        )+ 
+          text = element_text(size=12)
+        ) + 
         ylab(paste("Days as main pollutant in",input$Year)) +
         theme(
           axis.text.x = element_text(angle = 45, hjust = 1, color = "white"),
