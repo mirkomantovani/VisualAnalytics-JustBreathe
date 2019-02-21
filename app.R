@@ -137,6 +137,7 @@ ui <- dashboardPage(
                    tags$style("#County {background-color:blue;}"),
                    selectInput("County", "Select County", counties, selected = 'Adams',width = "200%"),
                    div(id="nozoom",sliderInput(inputId = "Year", 
+                                               sep = "",
                                                label = "Select Year", 
                                                value = 2018, min = 1980, max = 2018,width = "90%"))
                    ),
@@ -197,7 +198,15 @@ ui <- dashboardPage(
                      // SECOND SLIDER
                      nozoomslider = document.getElementById("nozoomslider");
                      nozoomslider.style.zoom = "40%";
-                     
+
+                    //DROPDOWN MENU NO ZOOM for problem in sage color picker
+                    //  drop = nozoomslider.getElementsByClassName("dropdown-shinyWidgets");
+                    // for (var i = 0; i < drop.length; i++) {
+                    //  drop[i].style.fontSize = "40%";
+                    // }
+                      //drop = document.getElementById("dropdown-menu-drop427388825");
+                     //drop.style.zoom = "40%";
+
                      //Range slider no numbers
                      tags = nozoomslider.getElementsByClassName("irs-grid-text");
                      for (var i = 0; i < tags.length; i++) {
@@ -938,7 +947,7 @@ server <- function(input, output, session) {
   
   # Time series of Pollutants Percentage
   output$pollutants_time <- renderPlot({
-    s_county<-subset(dataset, State == selected_state() & County == selected_county())
+    s_county<-subset(dataset, State == selected_state() & County == selected_county() & Year > input$range[1] & Year < input$range[2])
     s_county[,14:19]<- s_county[14:19]/s_county$Days.with.AQI*100
     # df <- data.frame(
     #   
